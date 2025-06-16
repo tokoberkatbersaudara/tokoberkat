@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Toko Berkat Bersaudara - Online</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+</head>
+<body>
+  <header>
+    <h1>Toko Berkat Bersaudara</h1>
+  </header>
+
+  <main>
+    <!-- Transaksi Penjualan -->
+    <section class="form-section">
+      <h2>Transaksi Penjualan</h2>
+      <form id="form-jual">
+        <label for="produkSelect">Pilih Produk:</label>
+        <select id="produkSelect" required></select>
+
+        <label for="jumlahBeli">Jumlah Beli:</label>
+        <input type="number" id="jumlahBeli" placeholder="Jumlah Beli" required />
+
+        <button type="submit">Simpan Penjualan</button>
+      </form>
+    </section>
+
+    <!-- Tabel Stok -->
+    <section>
+      <h2>Daftar Stok Barang</h2>
+      <button onclick="tampilkanStok()">🔄 Muat Ulang Stok</button>
+      <table>
+        <thead>
+          <tr>
+            <th>Nama</th>
+            <th>Kode</th>
+            <th>Stok</th>
+            <th>Harga</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="daftarStok"></tbody>
+      </table>
+    </section>
+
+    <!-- Tambah / Edit Barang -->
+    <section class="form-section">
+      <h2>Tambah / Edit Barang</h2>
+      <form id="form-barang">
+        <input type="hidden" id="editId" />
+        <input type="text" id="namaBarang" placeholder="Nama Barang" required />
+        <input type="text" id="kodeBarang" placeholder="Kode Barang" required />
+        <input type="number" id="jumlahBarang" placeholder="Jumlah Stok" required />
+        <input type="number" id="hargaBarang" placeholder="Harga Satuan" required />
+        <button type="submit">Simpan Barang</button>
+      </form>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 Toko Berkat Bersaudara</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
