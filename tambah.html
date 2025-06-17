@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tambah Barang - Toko Berkat</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js" defer></script>
+  <script defer>
+    window.onload = () => {
+      const SUPABASE_URL = 'https://uorlbeapdkgrnxvttbus.supabase.co';
+      const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvcmxiZWFwZGtncm54dnR0YnVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk5MDYzNjUsImV4cCI6MjA2NTQ4MjM2NX0.NftY81NHUzY6HO4ZwkX1EiTPz2sHLqBnXe5Q3RjSe8o';
+      const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+      document.getElementById('form-tambah').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const nama = document.getElementById('nama').value.trim();
+        const kode = document.getElementById('kode').value.trim();
+        const jumlah = parseInt(document.getElementById('jumlah').value);
+        const harga = parseInt(document.getElementById('harga').value);
+        const stok_minimum = parseInt(document.getElementById('stok_minimum').value);
+
+        const { data, error } = await supabase.from('products').insert([
+          { nama, kode, jumlah, harga, stok_minimum }
+        ]);
+
+        if (error) {
+          alert("❌ Gagal menyimpan barang.");
+          console.error(error);
+        } else {
+          alert("✅ Barang berhasil ditambahkan.");
+          window.location.href = 'dashboard.html';
+        }
+      });
+    };
+  </script>
+</head>
+<body>
+  <header>
+    <h1>Tambah Barang</h1>
+  </header>
+
+  <main>
+    <section class="form-section">
+      <form id="form-tambah">
+        <input type="text" id="nama" placeholder="Nama Barang" required />
+        <input type="text" id="kode" placeholder="Kode Barang" required />
+        <input type="number" id="jumlah" placeholder="Jumlah Stok" required />
+        <input type="number" id="harga" placeholder="Harga Satuan" required />
+        <input type="number" id="stok_minimum" placeholder="Stok Minimum" required />
+        <button type="submit">Simpan</button>
+      </form>
+      <br />
+      <a href="dashboard.html"><button>Kembali ke Dashboard</button></a>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 Toko Berkat Bersaudara</p>
+  </footer>
+</body>
+</html>

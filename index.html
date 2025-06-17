@@ -13,6 +13,13 @@
   </header>
 
   <main>
+    <!-- Tombol Kembali -->
+    <section class="form-section">
+      <a href="dashboard.html">
+        <button type="button">Kembali ke Dashboard</button>
+      </a>
+    </section>
+
     <!-- Transaksi Penjualan -->
     <section class="form-section">
       <h2>Transaksi Penjualan</h2>
@@ -24,37 +31,6 @@
         <input type="number" id="jumlahBeli" placeholder="Jumlah Beli" required />
 
         <button type="submit">Simpan Penjualan</button>
-      </form>
-    </section>
-
-    <!-- Tabel Stok -->
-    <section>
-      <h2>Daftar Stok Barang</h2>
-      <button onclick="tampilkanStok()">🔄 Muat Ulang Stok</button>
-      <table>
-        <thead>
-          <tr>
-            <th>Nama</th>
-            <th>Kode</th>
-            <th>Stok</th>
-            <th>Harga</th>
-            <th>Aksi</th>
-          </tr>
-        </thead>
-        <tbody id="daftarStok"></tbody>
-      </table>
-    </section>
-
-    <!-- Tambah / Edit Barang -->
-    <section class="form-section">
-      <h2>Tambah / Edit Barang</h2>
-      <form id="form-barang">
-        <input type="hidden" id="editId" />
-        <input type="text" id="namaBarang" placeholder="Nama Barang" required />
-        <input type="text" id="kodeBarang" placeholder="Kode Barang" required />
-        <input type="number" id="jumlahBarang" placeholder="Jumlah Stok" required />
-        <input type="number" id="hargaBarang" placeholder="Harga Satuan" required />
-        <button type="submit">Simpan Barang</button>
       </form>
     </section>
   </main>
