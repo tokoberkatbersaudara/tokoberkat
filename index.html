@@ -57,7 +57,7 @@
     };
     
     const tanggal = waktu.toLocaleDateString('id-ID', opsiTanggal);
-    const jam = waktu.toLocaleTimeString('id-ID', opsiWaktu);
+    const jam = waktu.toLocaleTimeString('en-GB', opsiWaktu);
     
     document.getElementById('waktuUpdate').textContent = `${tanggal} • ${jam}`;
   }
