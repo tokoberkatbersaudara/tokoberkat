@@ -30,6 +30,7 @@
 <body>
   <header>
     <h1>Dashboard Admin</h1>
+    <p id="waktuUpdate"></p>
   </header>
 
   <main>
@@ -48,5 +49,32 @@
   <footer>
     <p>&copy; 2025 Toko Berkat Bersaudara</p>
   </footer>
+
+<script>
+  function updateWaktu() {
+    const waktu = new Date();
+    const opsiTanggal = { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    };
+    const opsiWaktu = { 
+      hour: '2-digit', 
+      minute: '2-digit', 
+      second: '2-digit', 
+      hour12: false 
+    };
+
+    const tanggal = waktu.toLocaleDateString('id-ID', opsiTanggal);
+    const jam = waktu.toLocaleTimeString('en-GB', opsiWaktu); // otomatis pakai titik dua
+
+    document.getElementById('waktuUpdate').textContent = `${tanggal} • ${jam}`;
+  }
+
+  updateWaktu(); // tampil pertama kali
+  setInterval(updateWaktu, 1000); // update tiap detik
+</script>
+
 </body>
 </html>
