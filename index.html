@@ -10,6 +10,7 @@
 <body>
   <header>
     <h1>Toko Berkat Bersaudara</h1>
+        <p id="waktuUpdate"></p>
   </header>
 
   <main>
@@ -40,5 +41,29 @@
   </footer>
 
   <script src="app.js"></script>
+<script>
+  function updateWaktu() {
+    const waktu = new Date();
+    const opsiTanggal = { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    };
+    const opsiWaktu = { 
+      hour: '2-digit', 
+      minute: '2-digit', 
+      second: '2-digit' 
+    };
+    
+    const tanggal = waktu.toLocaleDateString('id-ID', opsiTanggal);
+    const jam = waktu.toLocaleTimeString('id-ID', opsiWaktu);
+    
+    document.getElementById('waktuUpdate').textContent = `${tanggal} • ${jam}`;
+  }
+
+  updateWaktu(); // tampilkan saat pertama kali
+  setInterval(updateWaktu, 1000); // update tiap 1 detik
+</script>
 </body>
 </html>
