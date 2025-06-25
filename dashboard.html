@@ -6,10 +6,16 @@
   <title>Dashboard - Toko Berkat Bersaudara</title>
   <link rel="stylesheet" href="style.css" />
   <style>
+    main {
+      max-width: 600px;
+      margin: auto;
+      padding: 20px;
+    }
+
     .welcome {
       text-align: center;
       font-size: 1.2em;
-      margin: 1em 0;
+      margin: 1.5em 0;
     }
 
     .form-section {
@@ -20,10 +26,19 @@
     }
 
     .form-section a button {
-      width: 200px;
-      padding: 10px;
+      width: 240px;
+      padding: 12px;
       font-size: 1em;
       cursor: pointer;
+      background-color: #2e7d32;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      transition: background-color 0.2s ease-in-out;
+    }
+
+    .form-section a button:hover {
+      background-color: #1b5e20;
     }
   </style>
 </head>
@@ -39,7 +54,7 @@
     </section>
 
     <section class="form-section">
-      <a href="index.html"><button>🏠 Halaman Penjualan</button></a>
+      <a href="penjualan.html"><button>🏠 Halaman Penjualan</button></a>
       <a href="stok.html"><button>📦 Cek Stok Barang</button></a>
       <a href="laporan.html"><button>📊 Laporan Penjualan</button></a>
       <a href="pengaturan.html"><button>⚙️ Pengaturan</button></a>
@@ -50,31 +65,26 @@
     <p>&copy; 2025 Toko Berkat Bersaudara</p>
   </footer>
 
-<script>
-  function updateWaktu() {
-    const waktu = new Date();
-    const opsiTanggal = { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    };
-    const opsiWaktu = { 
-      hour: '2-digit', 
-      minute: '2-digit', 
-      second: '2-digit', 
-      hour12: false 
-    };
+  <script>
+    function updateWaktu() {
+      const waktu = new Date();
+      const tanggal = waktu.toLocaleDateString('id-ID', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      const jam = waktu.toLocaleTimeString('id-ID', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
 
-    const tanggal = waktu.toLocaleDateString('id-ID', opsiTanggal);
-    const jam = waktu.toLocaleTimeString('en-GB', opsiWaktu); // otomatis pakai titik dua
+      document.getElementById('waktuUpdate').textContent = `${tanggal} • ${jam}`;
+    }
 
-    document.getElementById('waktuUpdate').textContent = `${tanggal} • ${jam}`;
-  }
-
-  updateWaktu(); // tampil pertama kali
-  setInterval(updateWaktu, 1000); // update tiap detik
-</script>
-
+    updateWaktu();
+    setInterval(updateWaktu, 1000);
+  </script>
 </body>
 </html>

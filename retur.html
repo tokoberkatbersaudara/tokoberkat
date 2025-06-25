@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Retur Penjualan - Toko Berkat</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+</head>
+<body>
+  <header>
+    <h1>Retur Penjualan</h1>
+  </header>
+
+  <section class="form-section">
+    <a href="dashboard.html"><button>Kembali ke Dashboard</button></a>
+  </section>
+
+  <section class="form-section">
+    <label for="cariTransaksi">Cari Transaksi:</label>
+    <input type="text" id="cariTransaksi" placeholder="🔍 Cari nama produk..." />
+  </section>
+
+  <main>
+    <table>
+      <thead>
+        <tr>
+          <th>Tanggal</th>
+          <th>Produk</th>
+          <th>Jumlah</th>
+          <th>Total</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody id="daftarRetur"></tbody>
+    </table>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 Toko Berkat Bersaudara</p>
+  </footer>
+
+  <script>
+    const SUPABASE_URL = 'https://uorlbeapdkgrnxvttbus.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvcmxiZWFwZGtncm54dnR0YnVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk5MDYzNjUsImV4cCI6MjA2NTQ4MjM2NX0.NftY81NHUzY6HO4ZwkX1EiTPz2sHLqBnXe5Q3RjSe8o';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let semuaTransaksi = [];
+
+    async function loadTransaksi() {
+      const { data, error } = await supabase
+        .from('sales')
+        .select('id, jumlah, total, tanggal, product_id(nama)')
+        .order('tanggal', { ascending: false });
+
+      if (error) {
+        alert("Gagal memuat transaksi.");
+        console.error(error);
+        return;
+      }
+
+      semuaTransaksi = data;
+      tampilkanDaftar(data);
+    }
+
+    function tampilkanDaftar(data) {
+      const tbody = document.getElementById('daftarRetur');
+      tbody.innerHTML = data.map(item => `
+        <tr>
+          <td>${new Date(item.tanggal).toLocaleDateString('id-ID')}</td>
+          <td>${item.product_id?.nama || '(produk tidak ditemukan)'}</td>
+          <td>${item.jumlah}</td>
+          <td>Rp ${item.total.toLocaleString('id-ID')}</td>
+          <td>
+            <button onclick="returTransaksi('${item.id}', ${item.jumlah})">Retur</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    async function returTransaksi(id, jumlahRetur) {
+      if (!confirm("Yakin ingin retur transaksi ini?")) return;
+
+      const { data: transaksi, error: errTrans } = await supabase
+        .from('sales')
+        .select('product_id')
+        .eq('id', id)
+        .single();
+
+      if (errTrans || !transaksi) {
+        alert("Transaksi tidak ditemukan.");
+        console.error(errTrans);
+        return;
+      }
+
+      const { data: produkData, error: errProduk } = await supabase
+        .from('products')
+        .select('jumlah')
+        .eq('id', transaksi.product_id)
+        .single();
+
+      if (errProduk || !produkData) {
+        alert("Produk tidak ditemukan.");
+        console.error(errProduk);
+        return;
+      }
+
+      const jumlahBaru = produkData.jumlah + jumlahRetur;
+      const { error: updateError } = await supabase
+        .from('products')
+        .update({ jumlah: jumlahBaru })
+        .eq('id', transaksi.product_id);
+
+      if (updateError) {
+        alert("Gagal mengembalikan stok.");
+        console.error(updateError);
+        return;
+      }
+
+      const { error: hapusError } = await supabase
+        .from('sales')
+        .delete()
+        .eq('id', id);
+
+      if (hapusError) {
+        alert("Gagal menghapus transaksi.");
+        console.error(hapusError);
+        return;
+      }
+
+      alert("✅ Retur berhasil.");
+      loadTransaksi();
+    }
+
+    document.getElementById('cariTransaksi').addEventListener('input', function () {
+      const keyword = this.value.toLowerCase();
+      const hasil = semuaTransaksi.filter(p =>
+        (p.product_id?.nama || '').toLowerCase().includes(keyword)
+      );
+      tampilkanDaftar(hasil);
+    });
+
+    loadTransaksi();
+  </script>
+</body>
+</html>

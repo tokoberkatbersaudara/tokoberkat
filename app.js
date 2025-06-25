@@ -1,68 +1,75 @@
 // Inisialisasi Supabase
 const SUPABASE_URL = 'https://uorlbeapdkgrnxvttbus.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvcmxiZWFwZGtncm54dnR0YnVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk5MDYzNjUsImV4cCI6MjA2NTQ4MjM2NX0.NftY81NHUzY6HO4ZwkX1EiTPz2sHLqBnXe5Q3RjSe8o'; // GANTI jika perlu
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // dipotong untuk ringkas
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// Tampilkan stok dan isi dropdown produk
+// Fungsi tampilkan stok (juga isi dropdown jika ada)
 async function tampilkanStok() {
   const { data, error } = await supabase.from('products').select('*');
   if (error) return alert("Gagal memuat data produk");
 
   const tbody = document.getElementById('daftarStok');
   const select = document.getElementById('produkSelect');
-  tbody.innerHTML = '';
-  select.innerHTML = '';
+
+  if (tbody) tbody.innerHTML = '';
+  if (select) select.innerHTML = '';
 
   data.forEach(produk => {
     // Tabel stok
-    tbody.innerHTML += `
-      <tr>
-        <td>${produk.nama}</td>
-        <td>${produk.kode}</td>
-        <td>${produk.jumlah}</td>
-        <td>Rp ${produk.harga.toLocaleString()}</td>
-        <td>
-          <button onclick="editBarang('${produk.id}', '${produk.nama}', '${produk.kode}', ${produk.jumlah}, ${produk.harga})">Edit</button>
-          <button onclick="hapusBarang('${produk.id}')">Hapus</button>
-        </td>
-      </tr>
-    `;
+    if (tbody) {
+      tbody.innerHTML += `
+        <tr>
+          <td>${produk.nama}</td>
+          <td>${produk.kode}</td>
+          <td>${produk.jumlah}</td>
+          <td>Rp ${produk.harga.toLocaleString()}</td>
+          <td>
+            <button onclick="editBarang('${produk.id}', '${produk.nama}', '${produk.kode}', ${produk.jumlah}, ${produk.harga})">Edit</button>
+            <button onclick="hapusBarang('${produk.id}')">Hapus</button>
+          </td>
+        </tr>
+      `;
+    }
 
     // Dropdown penjualan
-    select.innerHTML += `<option value="${produk.id}|${produk.jumlah}|${produk.harga}">${produk.nama}</option>`;
+    if (select) {
+      select.innerHTML += `<option value="${produk.id}|${produk.jumlah}|${produk.harga}">${produk.nama}</option>`;
+    }
   });
 }
 
-// Simpan barang baru atau edit barang
-document.getElementById('form-barang').addEventListener('submit', async function (e) {
-  e.preventDefault();
-  const id = document.getElementById('editId').value;
-  const nama = document.getElementById('namaBarang').value.trim();
-  const kode = document.getElementById('kodeBarang').value.trim();
-  const jumlah = parseInt(document.getElementById('jumlahBarang').value);
-  const harga = parseInt(document.getElementById('hargaBarang').value);
+// Form barang (tambah/edit)
+const formBarang = document.getElementById('form-barang');
+if (formBarang) {
+  formBarang.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const id = document.getElementById('editId').value;
+    const nama = document.getElementById('namaBarang').value.trim();
+    const kode = document.getElementById('kodeBarang').value.trim();
+    const jumlah = parseInt(document.getElementById('jumlahBarang').value);
+    const harga = parseInt(document.getElementById('hargaBarang').value);
 
-  if (!nama || !kode || isNaN(jumlah) || isNaN(harga)) return alert("Mohon isi semua data dengan benar");
+    if (!nama || !kode || isNaN(jumlah) || isNaN(harga)) return alert("Mohon isi semua data dengan benar");
 
-  if (id) {
-    // Edit barang
-    const { error } = await supabase.from('products').update({ nama, kode, jumlah, harga }).eq('id', id);
-    if (error) return alert("Gagal memperbarui barang");
-    alert("Barang berhasil diperbarui");
-  } else {
-    // Tambah barang baru
-    const { error } = await supabase.from('products').insert([{ nama, kode, jumlah, harga }]);
-    if (error) return alert("Gagal menambahkan barang");
-    alert("Barang berhasil ditambahkan");
-  }
+    if (id) {
+      const { error } = await supabase.from('products').update({ nama, kode, jumlah, harga }).eq('id', id);
+      if (error) return alert("Gagal memperbarui barang");
+      alert("Barang berhasil diperbarui");
+    } else {
+      const { error } = await supabase.from('products').insert([{ nama, kode, jumlah, harga }]);
+      if (error) return alert("Gagal menambahkan barang");
+      alert("Barang berhasil ditambahkan");
+    }
 
-  e.target.reset();
-  document.getElementById('editId').value = '';
-  tampilkanStok();
-});
+    this.reset();
+    document.getElementById('editId').value = '';
+    tampilkanStok();
+  });
+}
 
-// Isi form edit
+// Fungsi edit barang
 function editBarang(id, nama, kode, jumlah, harga) {
+  if (!document.getElementById('editId')) return;
   document.getElementById('editId').value = id;
   document.getElementById('namaBarang').value = nama;
   document.getElementById('kodeBarang').value = kode;
@@ -70,7 +77,7 @@ function editBarang(id, nama, kode, jumlah, harga) {
   document.getElementById('hargaBarang').value = harga;
 }
 
-// Hapus barang
+// Fungsi hapus barang
 async function hapusBarang(id) {
   if (!confirm("Yakin ingin menghapus barang ini?")) return;
   const { error } = await supabase.from('products').delete().eq('id', id);
@@ -79,32 +86,36 @@ async function hapusBarang(id) {
   tampilkanStok();
 }
 
-// Simpan transaksi penjualan
-document.getElementById('form-jual').addEventListener('submit', async function (e) {
-  e.preventDefault();
+// Form penjualan
+const formJual = document.getElementById('form-jual');
+if (formJual) {
+  formJual.addEventListener('submit', async function (e) {
+    e.preventDefault();
 
-  const value = document.getElementById('produkSelect').value;
-  const jumlahBeli = parseInt(document.getElementById('jumlahBeli').value);
-  const [id, stok, harga] = value.split('|');
-  const sisa = parseInt(stok) - jumlahBeli;
+    const value = document.getElementById('produkSelect').value;
+    const jumlahBeli = parseInt(document.getElementById('jumlahBeli').value);
+    const [id, stok, harga] = value.split('|');
+    const sisa = parseInt(stok) - jumlahBeli;
 
-  if (jumlahBeli > parseInt(stok)) return alert("Stok tidak cukup");
+    if (jumlahBeli > parseInt(stok)) return alert("Stok tidak cukup");
 
-  const total = jumlahBeli * parseInt(harga);
+    const total = jumlahBeli * parseInt(harga);
 
-  const { error: errSale } = await supabase.from('sales').insert([
-    { product_id: id, jumlah: jumlahBeli, harga: parseInt(harga), total }
-  ]);
+    const { error: errSale } = await supabase.from('sales').insert([
+      { product_id: id, jumlah: jumlahBeli, harga: parseInt(harga), total }
+    ]);
+    if (errSale) return alert("Gagal menyimpan penjualan");
 
-  if (errSale) return alert("Gagal menyimpan penjualan");
+    const { error: errUpdate } = await supabase.from('products').update({ jumlah: sisa }).eq('id', id);
+    if (errUpdate) return alert("Gagal memperbarui stok");
 
-  const { error: errUpdate } = await supabase.from('products').update({ jumlah: sisa }).eq('id', id);
-  if (errUpdate) return alert("Gagal memperbarui stok");
+    alert("Penjualan berhasil disimpan");
+    this.reset();
+    tampilkanStok();
+  });
+}
 
-  alert("Penjualan berhasil disimpan");
-  this.reset();
+// Jalankan tampilkan stok jika ada elemen yang memerlukan
+if (document.getElementById('daftarStok') || document.getElementById('produkSelect')) {
   tampilkanStok();
-});
-
-// Jalankan saat halaman pertama kali dibuka
-tampilkanStok();
+}
