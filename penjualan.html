@@ -121,8 +121,10 @@
       const { produk, jumlah, total, tanggal } = transaksiTerakhir;
       const strukWindow = window.open('', '', 'width=400,height=600');
       strukWindow.document.write(`
-        <html><head><title>Struk Penjualan</title></head><body>
-        <h2>Toko Berkat Bersaudara</h2>
+        <html><head><title>Invoice</title></head><body>
+        <h2 style="text-align: center;">Toko Berkat Bersaudara</h2>
+        <p style="text-align: center;">Jl. Kampung Melayu Darat No 34 Rt 8</p>
+        <p style="text-align: center;">Banjarmasin</p>
         <p>Tanggal: ${new Date(tanggal).toLocaleString()}</p>
         <hr/>
         <p>Produk: ${produk.nama}</p>
@@ -130,7 +132,7 @@
         <p>Harga: Rp ${produk.harga.toLocaleString()}</p>
         <p>Total: <strong>Rp ${total.toLocaleString()}</strong></p>
         <hr/>
-        <p>Terima kasih!</p>
+        <p style="text-align: center;">Terima kasih!</p>
         </body></html>
       `);
       strukWindow.document.close();
