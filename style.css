@@ -88,9 +88,38 @@ td button:hover {
 
 @media print {
   body {
-    width: 58mm;
-    font-size: 10px;
+    width: 80mm;
+    font-size: 11px;
+    font-family: monospace;
     margin: 0;
     padding: 0;
+  }
+
+  header, footer, button, input, select {
+    display: none !important;
+  }
+
+  .struk {
+    width: 100%;
+    padding: 0 5px;
+    box-sizing: border-box;
+  }
+
+  .struk h2, .struk h3 {
+    text-align: center;
+    margin: 4px 0;
+  }
+
+  .struk .item {
+    display: flex;
+    justify-content: space-between;
+    margin: 2px 0;
+  }
+
+  .struk .total {
+    border-top: 1px dashed #000;
+    margin-top: 5px;
+    padding-top: 5px;
+    font-weight: bold;
   }
 }
