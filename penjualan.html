@@ -15,6 +15,7 @@
   <main>
     <section class="form-section">
       <a href="dashboard.html"><button type="button">Kembali ke Dashboard</button></a>
+      <button type="button" onclick="loadProduk()">🔄 Refresh Produk</button>
     </section>
 
     <section class="form-section">
@@ -35,10 +36,9 @@
     <p>&copy; 2025 Toko Berkat Bersaudara</p>
   </footer>
 
-  <!-- Muat Supabase JS lebih dulu -->
+  <!-- Supabase JS -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 
-  <!-- Script utama -->
   <script>
     const SUPABASE_URL = 'https://uorlbeapdkgrnxvttbus.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvcmxiZWFwZGtncm54dnR0YnVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk5MDYzNjUsImV4cCI6MjA2NTQ4MjM2NX0.NftY81NHUzY6HO4ZwkX1EiTPz2sHLqBnXe5Q3RjSe8o';
@@ -59,12 +59,13 @@
 
     function tampilkanDropdown(data) {
       const select = document.getElementById('produkSelect');
+      if (!select) return;
       select.innerHTML = data.map(p => `<option value="${p.id}">${p.nama} (${p.kode})</option>`).join('');
     }
 
     document.getElementById('cariProduk').addEventListener('input', function () {
       const keyword = this.value.toLowerCase();
-      const hasil = semuaProduk.filter(p => 
+      const hasil = semuaProduk.filter(p =>
         p.nama.toLowerCase().includes(keyword) || p.kode.toLowerCase().includes(keyword)
       );
       tampilkanDropdown(hasil);
@@ -73,7 +74,7 @@
     document.getElementById('btnSimpan').addEventListener('click', async () => {
       const idProduk = document.getElementById('produkSelect').value;
       const jumlah = parseInt(document.getElementById('jumlahBeli').value);
-      const produk = semuaProduk.find(p => p.id == idProduk);
+      const produk = semuaProduk.find(p => p.id === parseInt(idProduk));
 
       if (!produk || isNaN(jumlah) || jumlah <= 0) {
         alert("❗ Mohon pilih produk dan isi jumlah yang benar.");
@@ -110,14 +111,18 @@
       } else {
         alert(`✅ Penjualan produk "${produk.nama}" sebanyak ${jumlah} berhasil!`);
         document.getElementById('jumlahBeli').value = '';
-        loadProduk();
+        loadProduk(); // Refresh dropdown setelah simpan
       }
     });
 
     function updateWaktu() {
       const waktu = new Date();
-      const tanggal = waktu.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-      const jam = waktu.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      const tanggal = waktu.toLocaleDateString('id-ID', {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+      });
+      const jam = waktu.toLocaleTimeString('id-ID', {
+        hour: '2-digit', minute: '2-digit', second: '2-digit'
+      });
       document.getElementById('waktuUpdate').textContent = `${tanggal} • ${jam}`;
     }
 

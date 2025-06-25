@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Laporan Penjualan - Toko Berkat</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+</head>
+<body>
+  <header>
+    <h1>Laporan Penjualan</h1>
+  </header>
+
+  <section class="form-section">
+    <a href="dashboard.html"><button>Kembali ke Dashboard</button></a>
+  </section>
+
+  <section class="form-section">
+    <input type="text" id="cariLaporan" placeholder="🔍 Cari nama produk..." />
+  </section>
+
+  <main>
+    <table>
+      <thead>
+        <tr>
+          <th>Tanggal</th>
+          <th>Produk</th>
+          <th>Jumlah</th>
+          <th>Harga</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody id="tabelLaporan"></tbody>
+    </table>
+    <p style="margin-top: 1em;"><strong>Total Penjualan: <span id="totalPenjualan">Rp 0</span></strong></p>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 Toko Berkat Bersaudara</p>
+  </footer>
+
+  <script>
+    const SUPABASE_URL = 'https://uorlbeapdkgrnxvttbus.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvcmxiZWFwZGtncm54dnR0YnVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk5MDYzNjUsImV4cCI6MjA2NTQ4MjM2NX0.NftY81NHUzY6HO4ZwkX1EiTPz2sHLqBnXe5Q3RjSe8o';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let semuaLaporan = [];
+
+    async function loadLaporan() {
+      const { data, error } = await supabase
+        .from('sales')
+        .select('id, jumlah, harga, total, tanggal, products(nama)')
+        .order('tanggal', { ascending: false });
+
+      if (error) {
+        alert("❌ Gagal memuat laporan penjualan.");
+        console.error(error);
+        return;
+      }
+
+      semuaLaporan = data;
+      tampilkanLaporan(data);
+    }
+
+    function tampilkanLaporan(data) {
+      const tbody = document.getElementById('tabelLaporan');
+      const totalElem = document.getElementById('totalPenjualan');
+      tbody.innerHTML = '';
+
+      let totalSemua = 0;
+      data.forEach(item => {
+        totalSemua += item.total;
+        tbody.innerHTML += `
+          <tr>
+            <td>${new Date(item.tanggal).toLocaleDateString()}</td>
+            <td>${item.products?.nama || '(produk tidak ditemukan)'}</td>
+            <td>${item.jumlah}</td>
+            <td>Rp ${item.harga.toLocaleString()}</td>
+            <td>Rp ${item.total.toLocaleString()}</td>
+          </tr>
+        `;
+      });
+
+      totalElem.textContent = 'Rp ' + totalSemua.toLocaleString();
+    }
+
+    document.getElementById('cariLaporan').addEventListener('input', function () {
+      const keyword = this.value.toLowerCase();
+      const hasil = semuaLaporan.filter(item =>
+        (item.products?.nama || '').toLowerCase().includes(keyword)
+      );
+      tampilkanLaporan(hasil);
+    });
+
+    loadLaporan();
+  </script>
+</body>
+</html>
