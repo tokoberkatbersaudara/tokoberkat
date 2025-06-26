@@ -1,3 +1,4 @@
+/* === RESET DASAR === */
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background-color: #f4f4f4;
@@ -5,6 +6,7 @@ body {
   padding: 20px;
 }
 
+/* === HEADER & FOOTER === */
 header, footer {
   text-align: center;
   padding: 16px;
@@ -12,22 +14,26 @@ header, footer {
   color: white;
 }
 
+/* === MAIN CONTAINER === */
 main {
   max-width: 900px;
   margin: auto;
 }
 
+/* === JUDUL === */
 h2 {
   margin-top: 30px;
   color: #333;
 }
 
+/* === FORM === */
 form {
   display: grid;
   gap: 10px;
   margin-top: 10px;
 }
 
+/* === INPUT, SELECT, BUTTON === */
 input, select, button {
   padding: 10px;
   font-size: 1em;
@@ -35,6 +41,7 @@ input, select, button {
   border-radius: 4px;
 }
 
+/* === TOMBOL UMUM === */
 button {
   background-color: #2e7d32;
   color: white;
@@ -46,6 +53,7 @@ button:hover {
   background-color: #1b5e20;
 }
 
+/* === TABEL === */
 table {
   width: 100%;
   border-collapse: collapse;
@@ -78,6 +86,7 @@ td button:hover {
   background-color: #01579b;
 }
 
+/* === FORM SECTION === */
 .form-section {
   margin-bottom: 40px;
   background-color: #fff;
@@ -86,7 +95,41 @@ td button:hover {
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
+/* === TOMBOL HAPUS KERANJANG === */
+.btn-hapus {
+  background: none;
+  border: none;
+  color: #c00;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.btn-hapus:hover {
+  background: rgba(200, 0, 0, 0.1);
+}
+
+/* === LIST KERANJANG === */
+.keranjang-list {
+  list-style-type: none;
+  padding-left: 0;
+}
+
+/* === TOMBOL AKSI (GROUP) === */
+.tombol-aksi {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* === MODE CETAK / PRINT === */
 @media print {
+  @page {
+    margin: 5mm;
+  }
+
   body {
     width: 80mm;
     font-size: 11px;
@@ -95,31 +138,56 @@ td button:hover {
     padding: 0;
   }
 
-  header, footer, button, input, select {
+  header,
+  footer,
+  button,
+  input,
+  select {
     display: none !important;
   }
 
   .struk {
     width: 100%;
-    padding: 0 5px;
+    padding: 10px;
     box-sizing: border-box;
   }
 
-  .struk h2, .struk h3 {
+  .struk h2 {
     text-align: center;
-    margin: 4px 0;
+    margin: 0 0 4px;
   }
 
-  .struk .item {
+  .struk p {
+    margin: 2px 0;
+  }
+
+  .info-waktu p {
+    margin: 1px 0;
+    font-size: 10px;
+  }
+
+  .item {
     display: flex;
     justify-content: space-between;
     margin: 2px 0;
   }
 
-  .struk .total {
+  .total {
     border-top: 1px dashed #000;
-    margin-top: 5px;
-    padding-top: 5px;
+    margin-top: 6px;
+    padding-top: 4px;
     font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  hr {
+    border: none;
+    border-top: 1px dashed #000;
+    margin: 4px 0;
+  }
+
+  .center {
+    text-align: center;
   }
 }

@@ -3,7 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Penjualan - Toko Berkat</title>
+  <title></title>
+
+  <!-- Styling khusus saat print -->
+  <style media="print">
+    @page { margin: 5mm; }
+    body { margin: 0; font-family: sans-serif; }
+  </style>
+
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 </head>
@@ -15,7 +22,9 @@
 
   <main>
     <section class="form-section">
-      <a href="dashboard.html"><button type="button">Kembali ke Dashboard</button></a>
+      <a href="dashboard.html">
+        <button type="button">Kembali ke Dashboard</button>
+      </a>
     </section>
 
     <section class="form-section">
@@ -28,8 +37,16 @@
       <label for="jumlahBeli">Jumlah Beli:</label>
       <input type="number" id="jumlahBeli" placeholder="Misal: 3" required />
 
-      <button id="btnSimpan">💾 Simpan Penjualan</button>
-      <button id="btnPrint" style="display:none;">🖨️ Cetak Struk</button>
+      <div style="margin-top: 10px;">
+        <button id="btnTambah">Tambah ke Keranjang</button>
+        <button id="btnSimpan">💾 Simpan Penjualan</button>
+        <button id="btnPrint" style="display:none;">🖨️ Cetak Struk</button>
+      </div>
+    </section>
+
+    <section class="form-section">
+      <h3>Keranjang:</h3>
+      <ul id="daftarKeranjang" style="list-style-type: none; padding-left: 0;"></ul>
     </section>
   </main>
 
@@ -37,118 +54,6 @@
     <p>&copy; 2025 Toko Berkat Bersaudara</p>
   </footer>
 
-  <script>
-    const SUPABASE_URL = 'https://uorlbeapdkgrnxvttbus.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvcmxiZWFwZGtncm54dnR0YnVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk5MDYzNjUsImV4cCI6MjA2NTQ4MjM2NX0.NftY81NHUzY6HO4ZwkX1EiTPz2sHLqBnXe5Q3RjSe8o';
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    let semuaProduk = [];
-    let transaksiTerakhir = null;
-
-    async function loadProduk() {
-      const { data, error } = await supabase.from('products').select('*');
-      if (error) {
-        alert("❌ Gagal memuat produk!");
-        console.error(error);
-        return;
-      }
-      semuaProduk = data;
-      tampilkanDropdown(data);
-    }
-
-    function tampilkanDropdown(data) {
-      const select = document.getElementById('produkSelect');
-      select.innerHTML = data.map(p => `<option value="${p.id}">${p.nama} (${p.kode})</option>`).join('');
-    }
-
-    document.getElementById('cariProduk').addEventListener('input', function () {
-      const keyword = this.value.toLowerCase();
-      const hasil = semuaProduk.filter(p => 
-        p.nama.toLowerCase().includes(keyword) || p.kode.toLowerCase().includes(keyword)
-      );
-      tampilkanDropdown(hasil);
-    });
-
-    document.getElementById('btnSimpan').addEventListener('click', async () => {
-      const idProduk = document.getElementById('produkSelect').value;
-      const jumlah = parseInt(document.getElementById('jumlahBeli').value);
-      const produk = semuaProduk.find(p => p.id == idProduk);
-
-      if (!produk || isNaN(jumlah) || jumlah <= 0) {
-        alert("❗ Mohon pilih produk dan isi jumlah yang benar.");
-        return;
-      }
-
-      if (jumlah > produk.jumlah) {
-        alert("⚠️ Stok tidak cukup!");
-        return;
-      }
-
-      const total = produk.harga * jumlah;
-      const tanggal = new Date().toISOString();
-
-      const { data: inserted, error: insertError } = await supabase.from('sales').insert([{
-        product_id: produk.id,
-        jumlah,
-        harga: produk.harga,
-        total,
-        tanggal
-      }]).select().single();
-
-      if (insertError) {
-        alert("❌ Gagal menyimpan penjualan!");
-        console.error(insertError);
-        return;
-      }
-
-      const sisa = produk.jumlah - jumlah;
-      const { error: updateError } = await supabase.from('products').update({ jumlah: sisa }).eq('id', produk.id);
-      if (updateError) {
-        alert("⚠️ Penjualan berhasil, tapi stok gagal di-update.");
-        console.error(updateError);
-      } else {
-        alert(`✅ Penjualan produk "${produk.nama}" sebanyak ${jumlah} berhasil!`);
-        document.getElementById('jumlahBeli').value = '';
-        loadProduk();
-        transaksiTerakhir = { produk, jumlah, total, tanggal };
-        document.getElementById('btnPrint').style.display = 'inline-block';
-      }
-    });
-
-    document.getElementById('btnPrint').addEventListener('click', () => {
-      if (!transaksiTerakhir) return;
-
-      const { produk, jumlah, total, tanggal } = transaksiTerakhir;
-      const strukWindow = window.open('', '', 'width=400,height=600');
-      strukWindow.document.write(`
-        <html><head><title>Invoice</title></head><body>
-        <h2 style="text-align: center;">Toko Berkat Bersaudara</h2>
-        <p style="text-align: center;">Jl. Kampung Melayu Darat No 34 Rt 8</p>
-        <p style="text-align: center;">Banjarmasin</p>
-        <p>Tanggal: ${new Date(tanggal).toLocaleString()}</p>
-        <hr/>
-        <p>Produk: ${produk.nama}</p>
-        <p>Jumlah: ${jumlah}</p>
-        <p>Harga: Rp ${produk.harga.toLocaleString()}</p>
-        <p>Total: <strong>Rp ${total.toLocaleString()}</strong></p>
-        <hr/>
-        <p style="text-align: center;">Terima kasih!</p>
-        </body></html>
-      `);
-      strukWindow.document.close();
-      strukWindow.print();
-    });
-
-    function updateWaktu() {
-      const waktu = new Date();
-      const tanggal = waktu.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-      const jam = waktu.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-      document.getElementById('waktuUpdate').textContent = `${tanggal} • ${jam}`;
-    }
-
-    updateWaktu();
-    setInterval(updateWaktu, 1000);
-    loadProduk();
-  </script>
+  <script src="penjualan.js"></script>
 </body>
 </html>
