@@ -10,117 +10,235 @@
 <body>
   <header>
     <h1>Laporan Penjualan</h1>
+    <p id="infoRentang"></p>
   </header>
 
   <section class="form-section">
-    <a href="dashboard.html"><button>Kembali ke Dashboard</button></a>
-    <button onclick="exportCSV()">Export ke CSV</button>
+    <a href="dashboard.html"><button type="button">Kembali ke Dashboard</button></a>
   </section>
 
-  <section class="form-section">
-    <input type="text" id="cariLaporan" placeholder="🔍 Cari nama produk..." />
+  <!-- Preset cepat -->
+  <section class="form-section" style="display:flex; flex-wrap:wrap; gap:.5rem;">
+    <button id="btnHari">Hari ini</button>
+    <button id="btnMinggu">Minggu ini</button>
+    <button id="btnBulan">Bulan ini</button>
+  </section>
+
+  <!-- Rentang manual + cari + aksi -->
+  <section class="form-section" style="display:grid; gap:.5rem; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); align-items:end;">
+    <div>
+      <label for="tglDari">Dari (WITA)</label>
+      <input type="date" id="tglDari">
+    </div>
+    <div>
+      <label for="tglSampai">Sampai (WITA)</label>
+      <input type="date" id="tglSampai">
+    </div>
+    <div>
+      <label for="cariLaporan">Cari</label>
+      <input type="text" id="cariLaporan" placeholder="🔍 Nama/kode produk...">
+    </div>
+    <div style="display:flex; gap:.5rem;">
+      <button id="btnMuat">Muat Data</button>
+      <button id="btnCSV">Export CSV</button>
+      <button id="btnCetak">Cetak</button>
+    </div>
   </section>
 
   <main>
-    <table>
-      <thead>
-        <tr>
-          <th>Tanggal</th>
-          <th>Produk</th>
-          <th>Jumlah</th>
-          <th>Harga</th>
-          <th>Total</th>
-        </tr>
-      </thead>
-      <tbody id="tabelLaporan"></tbody>
-    </table>
-    <p style="margin-top: 1em;"><strong>Total Penjualan: <span id="totalPenjualan">Rp 0</span></strong></p>
+    <section>
+      <table>
+        <thead>
+          <tr>
+            <th>Tanggal (WITA)</th>
+            <th>Produk</th>
+            <th>Kode</th>
+            <th>Jumlah</th>
+            <th>Harga</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody id="tBody"></tbody>
+        <tfoot>
+          <tr>
+            <th colspan="5" style="text-align:right;">Total Periode</th>
+            <th id="grandTotal">Rp 0</th>
+          </tr>
+        </tfoot>
+      </table>
+    </section>
   </main>
 
   <footer>
     <p>&copy; 2025 Toko Berkat Bersaudara</p>
   </footer>
 
-  <!-- Export CSV -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<script>
+/* === KONFIGURASI SUPABASE === */
+const SUPABASE_URL = 'https://uorlbeapdkgrnxvttbus.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvcmxiZWFwZGtncm54dnR0YnVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk5MDYzNjUsImV4cCI6MjA2NTQ4MjM2NX0.NftY81NHUzY6HO4ZwkX1EiTPz2sHLqBnXe5Q3RjSe8o';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  <script>
-    const SUPABASE_URL = 'https://uorlbeapdkgrnxvttbus.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvcmxiZWFwZGtncm54dnR0YnVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk5MDYzNjUsImV4cCI6MjA2NTQ4MjM2NX0.NftY81NHUzY6HO4ZwkX1EiTPz2sHLqBnXe5Q3RjSe8o';
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+/* === UTIL === */
+const toRp = n => "Rp " + Number(n||0).toLocaleString("id-ID");
+function toWITADisplay(iso){
+  return new Intl.DateTimeFormat('id-ID', {
+    timeZone: 'Asia/Makassar',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+    hour12: false     // <-- paksa 24-jam (12, 13, 14, dst)
+  }).format(new Date(iso));
+}
+function rangeISO_WITA(fromStr, toStr){
+  const start = new Date(`${fromStr}T00:00:00+08:00`);
+  const end   = new Date(`${toStr}T23:59:59+08:00`);
+  return { startISO: start.toISOString(), endISO: end.toISOString() };
+}
+function todayWITA(){
+  const now = new Date();
+  const y = now.toLocaleString('en-CA', {timeZone:'Asia/Makassar', year:'numeric'});
+  const m = now.toLocaleString('en-CA', {timeZone:'Asia/Makassar', month:'2-digit'});
+  const d = now.toLocaleString('en-CA', {timeZone:'Asia/Makassar', day:'2-digit'});
+  return `${y}-${m}-${d}`;
+}
+function weekStartEndWITA(){
+  const now = new Date(new Date().toLocaleString('en-US', {timeZone:'Asia/Makassar'}));
+  const day = now.getDay(); // 0 Minggu ... 6 Sabtu
+  const diffToMon = (day + 6) % 7; // Senin sebagai awal
+  const start = new Date(now); start.setDate(now.getDate() - diffToMon);
+  const end   = new Date(start); end.setDate(start.getDate() + 6);
+  const fmt = d => d.toLocaleDateString('en-CA', {timeZone:'Asia/Makassar'});
+  return { dari: fmt(start), sampai: fmt(end) };
+}
+function monthStartEndWITA(){
+  const now = new Date(new Date().toLocaleString('en-US', {timeZone:'Asia/Makassar'}));
+  const y = now.getFullYear(), m = now.getMonth();
+  const start = new Date(Date.UTC(y, m, 1, 0,0,0)); // UTC base
+  const end   = new Date(Date.UTC(y, m+1, 0, 23,59,59));
+  const toLocalStr = d => new Date(d).toLocaleDateString('en-CA', {timeZone:'Asia/Makassar'});
+  return { dari: toLocalStr(start), sampai: toLocalStr(end) };
+}
 
-    let semuaLaporan = [];
+/* === STATE === */
+let rawData = [];   // hasil query supabase
+let viewData = [];  // setelah filter cari
 
-    function isHariIni(tanggalStr) {
-      const tanggal = new Date(tanggalStr);
-      const hariIni = new Date();
-      return (
-        tanggal.getDate() === hariIni.getDate() &&
-        tanggal.getMonth() === hariIni.getMonth() &&
-        tanggal.getFullYear() === hariIni.getFullYear()
-      );
-    }
+/* === DOM === */
+const elDari = document.getElementById('tglDari');
+const elSampai = document.getElementById('tglSampai');
+const elCari = document.getElementById('cariLaporan');
+const elBody = document.getElementById('tBody');
+const elGrand = document.getElementById('grandTotal');
+const elInfo = document.getElementById('infoRentang');
 
-    async function loadLaporan() {
-      const { data, error } = await supabase
-        .from('sales')
-        .select('id, jumlah, harga, total, tanggal, products(nama)')
-        .order('tanggal', { ascending: false });
+const btnHari = document.getElementById('btnHari');
+const btnMinggu = document.getElementById('btnMinggu');
+const btnBulan = document.getElementById('btnBulan');
+const btnMuat = document.getElementById('btnMuat');
+const btnCSV = document.getElementById('btnCSV');
+const btnCetak = document.getElementById('btnCetak');
 
-      if (error) {
-        alert("❌ Gagal memuat laporan penjualan.");
-        console.error(error);
-        return;
-      }
+/* === RENDER === */
+function render(){
+  const kw = elCari.value.trim().toLowerCase();
+  viewData = rawData.filter(r => {
+    const nama = (r.product_id?.nama || '').toLowerCase();
+    const kode = (r.product_id?.kode || '').toLowerCase();
+    return !kw || nama.includes(kw) || kode.includes(kw);
+  });
 
-      const hariIniSaja = data.filter(item => isHariIni(item.tanggal));
-      semuaLaporan = hariIniSaja;
-      tampilkanLaporan(hariIniSaja);
-    }
+  elBody.innerHTML = viewData.map(r => `
+    <tr>
+      <td>${toWITADisplay(r.tanggal)}</td>
+      <td>${r.product_id?.nama || '-'}</td>
+      <td>${r.product_id?.kode || '-'}</td>
+      <td>${r.jumlah}</td>
+      <td>${toRp(r.harga)}</td>
+      <td>${toRp(r.total)}</td>
+    </tr>
+  `).join('');
 
-    function tampilkanLaporan(data) {
-      const tbody = document.getElementById('tabelLaporan');
-      const totalElem = document.getElementById('totalPenjualan');
-      tbody.innerHTML = '';
+  const total = viewData.reduce((a,b)=>a + (b.total||0), 0);
+  elGrand.textContent = toRp(total);
+}
 
-      let totalSemua = 0;
-      data.forEach(item => {
-        totalSemua += item.total;
-        tbody.innerHTML += `
-          <tr>
-            <td>${new Date(item.tanggal).toLocaleDateString()}</td>
-            <td>${item.products?.nama || '(produk tidak ditemukan)'}</td>
-            <td>${item.jumlah}</td>
-            <td>Rp ${item.harga.toLocaleString()}</td>
-            <td>Rp ${item.total.toLocaleString()}</td>
-          </tr>
-        `;
-      });
+/* === LOAD DATA === */
+async function loadRange(dari, sampai){
+  const { startISO, endISO } = rangeISO_WITA(dari, sampai);
+  elInfo.textContent = `Periode: ${dari} s.d. ${sampai} (WITA)`;
+  const { data, error } = await supabase
+    .from('sales')
+    .select('id, tanggal, jumlah, harga, total, product_id(nama,kode)')
+    .gte('tanggal', startISO)
+    .lte('tanggal', endISO)
+    .order('tanggal', { ascending: true });
 
-      totalElem.textContent = 'Rp ' + totalSemua.toLocaleString();
-    }
+  if (error) {
+    alert('Gagal memuat data laporan');
+    console.error(error);
+    return;
+  }
+  rawData = data || [];
+  render();
+}
 
-    function exportCSV() {
-      let csv = "Tanggal,Produk,Jumlah,Harga,Total\n";
-      semuaLaporan.forEach(item => {
-        const tanggal = new Date(item.tanggal).toLocaleDateString();
-        const nama = item.products?.nama || '';
-        csv += `${tanggal},"${nama}",${item.jumlah},${item.harga},${item.total}\n`;
-      });
+/* === PRESET HANDLERS === */
+btnHari.addEventListener('click', () => {
+  const t = todayWITA();
+  elDari.value = t; elSampai.value = t;
+  loadRange(t, t);
+});
+btnMinggu.addEventListener('click', () => {
+  const {dari, sampai} = weekStartEndWITA();
+  elDari.value = dari; elSampai.value = sampai;
+  loadRange(dari, sampai);
+});
+btnBulan.addEventListener('click', () => {
+  const {dari, sampai} = monthStartEndWITA();
+  elDari.value = dari; elSampai.value = sampai;
+  loadRange(dari, sampai);
+});
 
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-      saveAs(blob, "laporan-penjualan-hari-ini.csv");
-    }
+/* === MANUAL === */
+btnMuat.addEventListener('click', () => {
+  if (!elDari.value || !elSampai.value) {
+    alert('Isi tanggal Dari & Sampai');
+    return;
+  }
+  loadRange(elDari.value, elSampai.value);
+});
+elCari.addEventListener('input', render);
 
-    document.getElementById('cariLaporan').addEventListener('input', function () {
-      const keyword = this.value.toLowerCase();
-      const hasil = semuaLaporan.filter(item =>
-        (item.products?.nama || '').toLowerCase().includes(keyword)
-      );
-      tampilkanLaporan(hasil);
-    });
+/* === CSV & CETAK === */
+btnCSV.addEventListener('click', () => {
+  if (!viewData.length) return alert('Tidak ada data untuk diexport');
+  const header = ['Tanggal(WITA)','Produk','Kode','Jumlah','Harga','Total'];
+  const rows = viewData.map(r => [
+    toWITADisplay(r.tanggal),
+    (r.product_id?.nama || ''),
+    (r.product_id?.kode || ''),
+    r.jumlah,
+    r.harga,
+    r.total
+  ]);
+  const csv = [header, ...rows].map(row => row.map(String).map(v => `"${v.replaceAll('"','""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'laporan_penjualan.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+});
+btnCetak.addEventListener('click', () => {
+  window.print();
+});
 
-    loadLaporan();
-  </script>
+/* === INIT: default Hari ini === */
+(function init(){
+  const t = todayWITA();
+  elDari.value = t; elSampai.value = t;
+  loadRange(t, t);
+})();
+</script>
 </body>
 </html>
