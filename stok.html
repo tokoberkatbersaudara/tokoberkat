@@ -53,14 +53,16 @@
   <script>
     const SUPABASE_URL = 'https://uorlbeapdkgrnxvttbus.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvcmxiZWFwZGtncm54dnR0YnVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk5MDYzNjUsImV4cCI6MjA2NTQ4MjM2NX0.NftY81NHUzY6HO4ZwkX1EiTPz2sHLqBnXe5Q3RjSe8o';
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // pakai nama db, supaya tidak tabrakan dengan global "supabase" dari CDN
+    const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let semuaProduk = [];
     let halaman = 1;
     const perHalaman = 5;
 
     async function tampilkanStok() {
-      const { data, error } = await supabase.from('products').select('*');
+      const { data, error } = await db.from('products').select('*');
       if (error) {
         alert("Gagal memuat data stok!");
         console.error(error);
@@ -104,7 +106,9 @@
       const stokRendah = semuaProduk.filter(p => p.stok_minimum != null && p.jumlah < p.stok_minimum);
 
       if (stokRendah.length > 0) {
-        const daftar = stokRendah.map(p => `⚠️ Stok <strong>${p.nama}</strong> hanya ${p.jumlah}, di bawah minimum ${p.stok_minimum}`).join('<br>');
+        const daftar = stokRendah
+          .map(p => `⚠️ Stok <strong>${p.nama}</strong> hanya ${p.jumlah}, di bawah minimum ${p.stok_minimum}`)
+          .join('<br>');
         div.innerHTML = daftar;
       } else {
         div.innerHTML = '';
@@ -137,7 +141,7 @@
 
     async function hapusBarang(id) {
       if (!confirm("Yakin ingin menghapus barang ini?")) return;
-      const { error } = await supabase.from('products').delete().eq('id', id);
+      const { error } = await db.from('products').delete().eq('id', id);
       if (error) {
         alert("Gagal menghapus data!");
         console.error(error);
