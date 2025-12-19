@@ -1,7 +1,9 @@
 // === KONFIGURASI SUPABASE ===
 const SUPABASE_URL = 'https://uorlbeapdkgrnxvttbus.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvcmxiZWFwZGtncm54dnR0YnVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk5MDYzNjUsImV4cCI6MjA2NTQ4MjM2NX0.NftY81NHUzY6HO4ZwkX1EiTPz2sHLqBnXe5Q3RjSe8o';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// pakai nama "db" supaya tidak tabrakan dengan global supabase dari CDN
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // === KONFIGURASI TOKO ===
 const TOKO = {
@@ -22,7 +24,7 @@ const formatRupiah = (angka) => "Rp " + angka.toLocaleString("id-ID");
 // === LOAD PRODUK ===
 async function loadProduk() {
   try {
-    const { data, error } = await supabase.from('products').select('*');
+    const { data, error } = await db.from('products').select('*');
     if (error) throw error;
     semuaProduk = data;
     tampilkanDropdown(data);
@@ -110,7 +112,7 @@ document.getElementById('btnSimpan').addEventListener('click', async () => {
       tanggal
     }));
 
-    const { error: insertError } = await supabase.from('sales').insert(dataPenjualan);
+    const { error: insertError } = await db.from('sales').insert(dataPenjualan);
     if (insertError) throw insertError;
 
     // ✅ Update stok dengan stok asli - jumlah terjual
@@ -119,7 +121,7 @@ document.getElementById('btnSimpan').addEventListener('click', async () => {
       if (!produkAsli) continue;
 
       const stokBaru = produkAsli.jumlah - item.jumlah;
-      const { error: updateError } = await supabase
+      const { error: updateError } = await db
         .from('products')
         .update({ jumlah: stokBaru })
         .eq('id', item.id);
