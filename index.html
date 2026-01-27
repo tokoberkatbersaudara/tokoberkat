@@ -1,19 +1,136 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="utf-8" />
-  <title>Mengarahkan…</title>
-  <link rel="canonical" href="/dashboard.html" />
-  <!-- Redirect super-cepat -->
-  <meta http-equiv="refresh" content="0; url=/dashboard.html" />
-  <script>
-    // Jaga-jaga: preserve query string & hash
-    const q = location.search || "";
-    const h = location.hash || "";
-    location.replace("/dashboard.html" + q + h);
-  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard - Toko Berkat Bersaudara</title>
+
+  <link rel="stylesheet" href="assets/css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="lib/supabase.js"></script>
 </head>
 <body>
-  <p>Memindahkan ke <a href="/dashboard.html">Dashboard</a>…</p>
+  <div class="app">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="title">Toko Berkat Bersaudara</div>
+        <div class="meta" id="waktuUpdate">—</div>
+      </div>
+
+      <nav class="nav" aria-label="Navigasi">
+        <a class="active" href="index.html">
+          <span class="ico">🏠</span>
+          <span class="label">Dashboard</span>
+        </a>
+        <a href="pages/penjualan.html">
+          <span class="ico">🧾</span>
+          <span class="label">Penjualan</span>
+        </a>
+        <a href="pages/stok.html">
+          <span class="ico">📦</span>
+          <span class="label">Stok</span>
+        </a>
+        <a href="pages/laporan.html">
+          <span class="ico">📊</span>
+          <span class="label">Laporan</span>
+        </a>
+        <a href="pages/retur.html">
+          <span class="ico">↩️</span>
+          <span class="label">Retur</span>
+        </a>
+      </nav>
+    </aside>
+
+    <!-- CONTENT -->
+    <div class="content">
+      <header>
+        <h1>Dashboard</h1>
+        <p class="muted">Ringkasan penjualan hari ini</p>
+      </header>
+
+      <main>
+        <section class="welcome">
+          <h3>Status Hari Ini</h3>
+
+          <div style="margin-top:14px; max-width: 860px;">
+            <div class="form-section" style="margin:0;">
+              <h3 style="margin-bottom:8px;">Penjualan</h3>
+
+              <div
+                style="
+                  display:grid;
+                  grid-template-columns: repeat(3, minmax(0, 1fr));
+                  gap: 12px;
+                  margin-top: 10px;
+                "
+              >
+                <div style="padding:12px; border:1px solid var(--border); border-radius:12px; background: rgba(255,255,255,.03);">
+                  <div class="muted" style="font-size:12px;">Transaksi</div>
+                  <div style="font-size:22px; font-weight:850; margin-top:6px;" id="dashTx">0</div>
+                </div>
+
+                <div style="padding:12px; border:1px solid var(--border); border-radius:12px; background: rgba(255,255,255,.03);">
+                  <div class="muted" style="font-size:12px;">Omzet</div>
+                  <div style="font-size:22px; font-weight:850; margin-top:6px;" id="dashOmzet">Rp 0</div>
+                </div>
+
+                <div style="padding:12px; border:1px solid var(--border); border-radius:12px; background: rgba(255,255,255,.03);">
+                  <div class="muted" style="font-size:12px;">Item Terjual</div>
+                  <div style="font-size:22px; font-weight:850; margin-top:6px;" id="dashQty">0</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer>
+        <p>&copy; 2025 Toko Berkat Bersaudara</p>
+      </footer>
+    </div>
+  </div>
+
+  <script src="js/ui.js"></script>
+
+  <script>
+    const toRp = (n) => 'Rp ' + Number(n || 0).toLocaleString('id-ID');
+
+    function todayRangeISO() {
+      const now = new Date();
+      const y = now.toLocaleString('en-CA', { timeZone: 'Asia/Makassar', year: 'numeric' });
+      const m = now.toLocaleString('en-CA', { timeZone: 'Asia/Makassar', month: '2-digit' });
+      const d = now.toLocaleString('en-CA', { timeZone: 'Asia/Makassar', day: '2-digit' });
+
+      const start = new Date(`${y}-${m}-${d}T00:00:00+08:00`).toISOString();
+      const end   = new Date(`${y}-${m}-${d}T23:59:59+08:00`).toISOString();
+      return { start, end };
+    }
+
+    async function loadDashboard() {
+      const { start, end } = todayRangeISO();
+
+      const { data, error } = await window.db
+        .from('sales')
+        .select('id, jumlah, total')
+        .gte('tanggal', start)
+        .lte('tanggal', end);
+
+      if (error) {
+        console.error(error);
+        return;
+      }
+
+      const transaksi = (data || []).length;
+      const omzet = (data || []).reduce((a, b) => a + (b.total || 0), 0);
+      const qty = (data || []).reduce((a, b) => a + (b.jumlah || 0), 0);
+
+      document.getElementById('dashTx').textContent = transaksi;
+      document.getElementById('dashOmzet').textContent = toRp(omzet);
+      document.getElementById('dashQty').textContent = qty;
+    }
+
+    loadDashboard();
+  </script>
 </body>
 </html>

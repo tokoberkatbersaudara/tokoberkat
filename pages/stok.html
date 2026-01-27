@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stok - Toko Berkat Bersaudara</title>
+
+  <link rel="stylesheet" href="../assets/css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="../lib/supabase.js"></script>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="title">Toko Berkat Bersaudara</div>
+        <div class="meta" id="waktuUpdate">—</div>
+      </div>
+
+      <nav class="nav" aria-label="Navigasi">
+        <a href="../index.html"><span class="ico">🏠</span><span class="label">Dashboard</span></a>
+        <a href="./penjualan.html"><span class="ico">🧾</span><span class="label">Penjualan</span></a>
+        <a class="active" href="./stok.html"><span class="ico">📦</span><span class="label">Stok</span></a>
+        <a href="./laporan.html"><span class="ico">📊</span><span class="label">Laporan</span></a>
+        <a href="./retur.html"><span class="ico">↩️</span><span class="label">Retur</span></a>
+      </nav>
+    </aside>
+
+    <div class="content">
+      <header>
+        <h1>Data Stok Barang</h1>
+        <p class="muted">Cek, cari, dan kelola stok.</p>
+      </header>
+
+      <main class="stok-grid">
+        <!-- KIRI: LIST -->
+        <div class="stok-col">
+          <section class="form-section">
+            <label for="cariInput">Cari</label>
+            <input type="text" id="cariInput" placeholder="🔍 Cari nama atau kode barang..." />
+          </section>
+
+          <section>
+            <table>
+              <thead>
+                <tr>
+                  <th>Nama</th>
+                  <th>Kode</th>
+                  <th>Jumlah</th>
+                  <th>Harga</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="daftarStok"></tbody>
+            </table>
+
+            <div id="pagination" style="margin-top: 1em;">
+              <button id="btnPrev" type="button">Sebelumnya</button>
+              <span id="halamanSekarang">1</span>
+              <button id="btnNext" type="button">Berikutnya</button>
+            </div>
+
+            <div id="peringatan" style="margin-top: 1em; color: var(--danger); font-weight: 800;"></div>
+          </section>
+        </div>
+
+        <!-- KANAN: EDIT CARD -->
+        <aside class="stok-side">
+          <section class="form-section sticky">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+              <h3 style="margin:0;">Edit Stok</h3>
+              <button id="btnClearEdit" type="button" class="btn-alt" style="display:none;">Tutup</button>
+            </div>
+
+            <p class="muted" id="editHint" style="margin:8px 0 12px;">
+              Klik tombol <b>Ubah</b> pada produk untuk mulai edit.
+            </p>
+
+            <input type="hidden" id="editId" />
+
+            <label for="editNama">Nama</label>
+            <input type="text" id="editNama" disabled />
+
+            <label for="editKode">Kode</label>
+            <input type="text" id="editKode" disabled />
+
+            <div class="grid-2" style="margin-top:10px;">
+              <div>
+                <label for="editJumlah">Jumlah</label>
+                <input type="number" id="editJumlah" min="0" />
+              </div>
+              <div>
+                <label for="editHarga">Harga</label>
+                <input type="number" id="editHarga" min="0" />
+              </div>
+            </div>
+
+            <div class="tombol-aksi" style="margin-top:12px;">
+              <button id="btnSimpanEdit" type="button" disabled>Simpan</button>
+              <button id="btnBatalEdit" type="button" class="btn-alt" disabled>Batal</button>
+            </div>
+
+            <p class="muted" style="margin:10px 0 0; font-size:12px;">
+              Nama & kode dikunci untuk mencegah salah input.
+            </p>
+          </section>
+        </aside>
+      </main>
+
+      <footer>
+        <p>&copy; 2025 Toko Berkat Bersaudara</p>
+      </footer>
+    </div>
+  </div>
+
+  <script src="../js/ui.js"></script>
+  <script src="../js/stok.js"></script>
+</body>
+</html>

@@ -1,0 +1,131 @@
+<!-- pages/penjualan.html -->
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Penjualan - Toko Berkat Bersaudara</title>
+
+  <!-- CSS utama -->
+  <link rel="stylesheet" href="../assets/css/style.css" />
+  <!-- CSS khusus PRINT 58mm -->
+  <link rel="stylesheet" href="../assets/css/print-58mm.css" media="print" />
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="../lib/supabase.js"></script>
+</head>
+<body>
+  <div class="app">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="title">Toko Berkat Bersaudara</div>
+        <div class="meta" id="waktuUpdate">—</div>
+      </div>
+
+      <nav class="nav" aria-label="Navigasi">
+        <a href="../index.html"><span class="ico">🏠</span><span class="label">Dashboard</span></a>
+        <a class="active" href="./penjualan.html"><span class="ico">🧾</span><span class="label">Penjualan</span></a>
+        <a href="./stok.html"><span class="ico">📦</span><span class="label">Stok</span></a>
+        <a href="./laporan.html"><span class="ico">📊</span><span class="label">Laporan</span></a>
+        <a href="./retur.html"><span class="ico">↩️</span><span class="label">Retur</span></a>
+      </nav>
+    </aside>
+
+    <!-- CONTENT -->
+    <div class="content">
+      <header>
+        <h1>Transaksi Penjualan</h1>
+        <p class="muted">Tambah item ke keranjang, simpan, lalu cetak kalau perlu.</p>
+      </header>
+
+      <main class="grid-penjualan">
+        <!-- KOLOM KIRI -->
+        <div class="col-main">
+          <!-- INPUT TRANSAKSI -->
+          <section class="form-section">
+            <label for="cariProduk">Cari Produk</label>
+            <input type="text" id="cariProduk" placeholder="🔍 Ketik nama/kode produk..." autocomplete="off" />
+
+            <label for="produkSelect">Pilih Produk</label>
+            <select id="produkSelect"></select>
+
+            <label for="jumlahBeli">Jumlah Beli</label>
+            <input type="number" id="jumlahBeli" min="1" inputmode="numeric" placeholder="Contoh: 3" />
+
+            <div style="margin-top:12px;">
+              <div class="utang-row">
+                <input type="checkbox" id="isUtang" />
+                <label for="isUtang" style="margin:0; font-weight:800;">Utang</label>
+              </div>
+
+              <div id="utangFields" style="display:none; margin-top:12px;">
+                <label for="customerName">Nama Pelanggan (opsional)</label>
+                <input type="text" id="customerName" placeholder="Contoh: Pak Budi" />
+
+                <label for="note" style="margin-top:8px;">Catatan (opsional)</label>
+                <input type="text" id="note" placeholder="Contoh: bayar minggu depan" />
+              </div>
+            </div>
+
+            <div class="tombol-aksi" style="margin-top:12px;">
+              <button id="btnTambah" type="button">Tambah</button>
+              <button id="btnSimpan" type="button">💾 Simpan</button>
+              <button id="btnPrintLast" type="button" style="display:none;">🖨️ Cetak Terakhir</button>
+            </div>
+
+            <p class="muted" id="lastTrxInfo" style="margin-top:10px;"></p>
+          </section>
+
+          <!-- KERANJANG -->
+          <section class="form-section">
+            <h3>Keranjang</h3>
+            <ul id="daftarKeranjang" class="keranjang-list"></ul>
+          </section>
+
+          <!-- AREA STRUK (WAJIB ADA, tersembunyi) -->
+          <div id="areaStruk" style="display:none;"></div>
+        </div>
+
+        <!-- KOLOM KANAN -->
+        <aside class="col-side">
+          <section class="form-section sticky">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+              <h3 style="margin:0;">Penjualan Hari Ini</h3>
+              <button id="btnRefreshHari" type="button">↻</button>
+            </div>
+
+            <p class="muted" id="infoHari" style="margin:6px 0;"></p>
+
+            <div style="max-height:60vh; overflow:auto;">
+              <table>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Jam</th>
+                    <th style="text-align:right;">Total</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="tBodyHari"></tbody>
+              </table>
+            </div>
+
+            <div style="margin-top:8px; text-align:right; font-weight:800;">
+              Total: <span id="totalHari">Rp 0</span>
+            </div>
+          </section>
+        </aside>
+      </main>
+
+      <footer>
+        <p>&copy; 2025 Toko Berkat Bersaudara</p>
+      </footer>
+    </div>
+  </div>
+
+  <!-- JS -->
+  <script src="../js/ui.js"></script>
+  <script src="../js/penjualan.js"></script>
+</body>
+</html>

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Laporan - Toko Berkat Bersaudara</title>
+
+  <link rel="stylesheet" href="../assets/css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="../lib/supabase.js"></script>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="title">Toko Berkat Bersaudara</div>
+        <div class="meta" id="waktuUpdate">—</div>
+      </div>
+
+      <nav class="nav" aria-label="Navigasi">
+        <a href="../index.html"><span class="ico">🏠</span><span class="label">Dashboard</span></a>
+        <a href="./penjualan.html"><span class="ico">🧾</span><span class="label">Penjualan</span></a>
+        <a href="./stok.html"><span class="ico">📦</span><span class="label">Stok</span></a>
+        <a class="active" href="./laporan.html"><span class="ico">📊</span><span class="label">Laporan</span></a>
+        <a href="./retur.html"><span class="ico">↩️</span><span class="label">Retur</span></a>
+      </nav>
+    </aside>
+
+    <div class="content">
+      <header>
+        <h1>Laporan Penjualan</h1>
+        <p id="infoRentang" class="muted"></p>
+      </header>
+
+      <main>
+        <section class="form-section" style="display:flex; flex-wrap:wrap; gap:.5rem;">
+          <button id="btnHari" type="button">Hari ini</button>
+          <button id="btnMinggu" type="button">Minggu ini</button>
+          <button id="btnBulan" type="button">Bulan ini</button>
+        </section>
+
+        <section
+          class="form-section"
+          style="
+            display:grid;
+            gap:.5rem;
+            grid-template-columns: repeat(auto-fit, minmax(180px,1fr));
+            align-items:end;
+          "
+        >
+          <div>
+            <label for="tglDari">Dari (WITA)</label>
+            <input type="date" id="tglDari" />
+          </div>
+
+          <div>
+            <label for="tglSampai">Sampai (WITA)</label>
+            <input type="date" id="tglSampai" />
+          </div>
+
+          <div>
+            <label for="cariLaporan">Cari</label>
+            <input type="text" id="cariLaporan" placeholder="🔍 Nama/kode produk..." />
+          </div>
+
+          <div style="display:flex; gap:.5rem; flex-wrap:wrap;">
+            <button id="btnMuat" type="button">Muat Data</button>
+            <button id="btnCSV" type="button">Export CSV</button>
+            <button id="btnCetak" type="button">Cetak</button>
+          </div>
+        </section>
+
+        <section>
+          <table>
+            <thead>
+              <tr>
+                <th>Tanggal (WITA)</th>
+                <th>Produk</th>
+                <th>Kode</th>
+                <th>Jumlah</th>
+                <th>Harga</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody id="tBody"></tbody>
+            <tfoot>
+              <tr>
+                <th colspan="5" style="text-align:right;">Total Periode</th>
+                <th id="grandTotal">Rp 0</th>
+              </tr>
+            </tfoot>
+          </table>
+        </section>
+      </main>
+
+      <footer>
+        <p>&copy; 2025 Toko Berkat Bersaudara</p>
+      </footer>
+    </div>
+  </div>
+
+  <script src="../js/ui.js"></script>
+  <script src="../js/laporan.js"></script>
+</body>
+</html>
