@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Retur - Toko Berkat Bersaudara</title>
+
+  <link rel="stylesheet" href="../assets/css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="../lib/supabase.js"></script>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="title">Toko Berkat Bersaudara</div>
+        <div class="meta" id="waktuUpdate">—</div>
+      </div>
+
+      <nav class="nav">
+        <a href="../index.html">🏠 Dashboard</a>
+        <a href="./penjualan.html">🧾 Penjualan</a>
+        <a href="./stok.html">📦 Stok</a>
+        <a href="./laporan.html">📊 Laporan</a>
+        <a class="active" href="./retur.html">↩️ Retur</a>
+      </nav>
+    </aside>
+
+    <div class="content">
+      <header>
+        <h1>Retur Penjualan</h1>
+        <p class="muted">Retur per item (wajib PIN & alasan).</p>
+      </header>
+
+      <main>
+        <section class="form-section">
+          <label for="cariTransaksi">Cari Produk</label>
+          <input type="text" id="cariTransaksi" placeholder="🔍 Ketik nama produk..." />
+        </section>
+
+        <section>
+          <table>
+            <thead>
+              <tr>
+                <th>Tanggal</th>
+                <th>Produk</th>
+                <th>Jumlah</th>
+                <th>Total</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="daftarRetur"></tbody>
+          </table>
+        </section>
+      </main>
+
+      <footer>
+        <p>&copy; 2025 Toko Berkat Bersaudara</p>
+      </footer>
+    </div>
+  </div>
+
+  <!-- MODAL RETUR (default: TERTUTUP) -->
+  <div class="modal" id="modalRetur" hidden>
+    <div class="modal__backdrop" id="modalBackdrop"></div>
+
+    <div class="modal__panel form-section"
+         role="dialog"
+         aria-modal="true"
+         aria-label="Konfirmasi Retur">
+      <h3>Konfirmasi Retur</h3>
+
+      <label for="returPin">PIN Retur</label>
+      <input type="password" id="returPin" placeholder="PIN" autocomplete="off" />
+
+      <label for="returAlasan">Alasan Retur</label>
+      <input type="text" id="returAlasan" placeholder="Wajib diisi" />
+
+      <div class="tombol-aksi">
+        <button id="btnKonfirmasiRetur" type="button">Proses Retur</button>
+        <button id="btnBatalRetur" type="button" class="btn-alt">Batal</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/ui.js"></script>
+  <script src="../js/retur.js"></script>
+</body>
+</html>
