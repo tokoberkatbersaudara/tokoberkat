@@ -90,33 +90,30 @@
           </div>
         </section>
 
-        <!-- LUNAS -->
+        <!-- LUNAS (RINGKAS: Tanggal | Kode (No Nota) | Total | (aksi kosong, tombol muncul saat klik via JS)) -->
         <section style="margin-top:14px;">
           <h3 style="margin:0 0 10px;">Lunas</h3>
           <table>
             <thead>
               <tr>
                 <th>Tanggal (WITA)</th>
-                <th>Produk</th>
                 <th>Kode</th>
-                <th>Jumlah</th>
-                <th>Harga</th>
-                <th>Total</th>
+                <th style="text-align:right;">Total</th>
+                <th style="text-align:right;"></th>
               </tr>
             </thead>
             <tbody id="tBodyLunas"></tbody>
             <tfoot>
               <tr>
-                <th colspan="5" style="text-align:right;">Total Lunas</th>
-                <th id="grandTotalLunas">Rp 0</th>
+                <th colspan="2" style="text-align:right;">Total Lunas</th>
+                <th id="grandTotalLunas" style="text-align:right;">Rp 0</th>
+                <th></th>
               </tr>
             </tfoot>
           </table>
         </section>
 
         <!-- UTANG -->
-        <!-- NOTE: tbody akan diisi oleh laporan.js.
-             Pastikan laporan.js mengisi 5 kolom sesuai header ini. -->
         <section style="margin-top:18px;">
           <h3 style="margin:0 0 10px;">Utang</h3>
           <table>
@@ -140,7 +137,7 @@
           </table>
         </section>
 
-        <!-- AREA CETAK -->
+        <!-- AREA CETAK (dipakai JS untuk print ulang) -->
         <section id="areaStruk" class="struk" style="display:none;"></section>
       </main>
 
@@ -150,12 +147,74 @@
     </div>
   </div>
 
+  <!-- MODAL DETAIL LUNAS (untuk print ulang transaksi lunas) -->
+  <div class="modal" id="modalLunas" aria-hidden="true">
+    <div class="modal__backdrop" id="modalLunasBackdrop"></div>
+
+    <div
+      class="modal__panel"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Detail Lunas"
+      style="
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: var(--pad-lg);
+      "
+    >
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+        <h3 style="margin:0;">Detail Lunas</h3>
+        <button type="button" id="btnTutupModalLunas" class="btn-alt">Tutup</button>
+      </div>
+
+      <div id="lunasMeta" class="muted" style="margin:8px 0 12px;"></div>
+
+      <div style="max-height:55vh; overflow:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Tanggal</th>
+              <th>Produk</th>
+              <th>Kode</th>
+              <th>Jumlah</th>
+              <th style="text-align:right;">Total</th>
+            </tr>
+          </thead>
+          <tbody id="lunasItems"></tbody>
+          <tfoot>
+            <tr>
+              <th colspan="4" style="text-align:right;">Grand Total</th>
+              <th id="lunasGrand" style="text-align:right;">Rp 0</th>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div class="tombol-aksi" style="margin-top:12px;">
+        <button type="button" id="btnCetakLunas">🖨️ Cetak</button>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL DETAIL UTANG -->
-  <!-- Penting: jangan pakai class "form-section" di panel modal, biar tidak transparan/gradient dari card -->
   <div class="modal" id="modalUtang" aria-hidden="true">
     <div class="modal__backdrop" id="modalUtangBackdrop"></div>
 
-    <div class="modal__panel" role="dialog" aria-modal="true" aria-label="Detail Utang">
+    <div
+      class="modal__panel"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Detail Utang"
+      style="
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: var(--pad-lg);
+      "
+    >
       <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
         <h3 style="margin:0;">Detail Utang</h3>
         <button type="button" id="btnTutupModalUtang" class="btn-alt">Tutup</button>
