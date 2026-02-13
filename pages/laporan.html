@@ -29,16 +29,18 @@
     <div class="content">
       <header>
         <h1>Laporan Penjualan</h1>
-        <p id="infoRentang" class="muted"></p>
+        <p id="infoRentang" class="muted">—</p>
       </header>
 
       <main>
+        <!-- QUICK RANGE -->
         <section class="form-section" style="display:flex; flex-wrap:wrap; gap:.5rem;">
           <button id="btnHari" type="button">Hari ini</button>
           <button id="btnMinggu" type="button">Minggu ini</button>
           <button id="btnBulan" type="button">Bulan ini</button>
         </section>
 
+        <!-- FILTER -->
         <section
           class="form-section"
           style="
@@ -70,7 +72,27 @@
           </div>
         </section>
 
-        <section>
+        <!-- RINGKASAN -->
+        <section class="form-section" style="display:grid; gap:10px; grid-template-columns:repeat(auto-fit,minmax(220px,1fr));">
+          <div style="padding:12px; border:1px solid var(--border); border-radius: var(--radius); background: rgba(255,255,255,.03);">
+            <div class="muted" style="font-size:12px;">Total Lunas</div>
+            <div id="totalLunas" style="font-weight:900; font-size:18px; margin-top:4px;">Rp 0</div>
+          </div>
+
+          <div style="padding:12px; border:1px solid var(--border); border-radius: var(--radius); background: rgba(255,255,255,.03);">
+            <div class="muted" style="font-size:12px;">Total Utang</div>
+            <div id="totalUtang" style="font-weight:900; font-size:18px; margin-top:4px;">Rp 0</div>
+          </div>
+
+          <div style="padding:12px; border:1px solid var(--border); border-radius: var(--radius); background: rgba(255,255,255,.03);">
+            <div class="muted" style="font-size:12px;">Total Periode</div>
+            <div id="grandTotalAll" style="font-weight:900; font-size:18px; margin-top:4px;">Rp 0</div>
+          </div>
+        </section>
+
+        <!-- LUNAS -->
+        <section style="margin-top:14px;">
+          <h3 style="margin:0 0 10px;">Lunas</h3>
           <table>
             <thead>
               <tr>
@@ -82,20 +104,88 @@
                 <th>Total</th>
               </tr>
             </thead>
-            <tbody id="tBody"></tbody>
+            <tbody id="tBodyLunas"></tbody>
             <tfoot>
               <tr>
-                <th colspan="5" style="text-align:right;">Total Periode</th>
-                <th id="grandTotal">Rp 0</th>
+                <th colspan="5" style="text-align:right;">Total Lunas</th>
+                <th id="grandTotalLunas">Rp 0</th>
               </tr>
             </tfoot>
           </table>
         </section>
+
+        <!-- UTANG -->
+        <!-- NOTE: tbody akan diisi oleh laporan.js.
+             Pastikan laporan.js mengisi 5 kolom sesuai header ini. -->
+        <section style="margin-top:18px;">
+          <h3 style="margin:0 0 10px;">Utang</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Tanggal (WITA)</th>
+                <th>Kode</th>
+                <th>Qty</th>
+                <th style="text-align:right;">Total</th>
+                <th style="text-align:right;"></th>
+              </tr>
+            </thead>
+            <tbody id="tBodyUtang"></tbody>
+            <tfoot>
+              <tr>
+                <th colspan="3" style="text-align:right;">Total Utang</th>
+                <th id="grandTotalUtang" style="text-align:right;">Rp 0</th>
+                <th></th>
+              </tr>
+            </tfoot>
+          </table>
+        </section>
+
+        <!-- AREA CETAK -->
+        <section id="areaStruk" class="struk" style="display:none;"></section>
       </main>
 
       <footer>
         <p>&copy; 2025 Toko Berkat Bersaudara</p>
       </footer>
+    </div>
+  </div>
+
+  <!-- MODAL DETAIL UTANG -->
+  <!-- Penting: jangan pakai class "form-section" di panel modal, biar tidak transparan/gradient dari card -->
+  <div class="modal" id="modalUtang" aria-hidden="true">
+    <div class="modal__backdrop" id="modalUtangBackdrop"></div>
+
+    <div class="modal__panel" role="dialog" aria-modal="true" aria-label="Detail Utang">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+        <h3 style="margin:0;">Detail Utang</h3>
+        <button type="button" id="btnTutupModalUtang" class="btn-alt">Tutup</button>
+      </div>
+
+      <div id="utangMeta" class="muted" style="margin:8px 0 12px;"></div>
+
+      <div style="max-height:55vh; overflow:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Tanggal</th>
+              <th>Kode</th>
+              <th>Jumlah</th>
+              <th style="text-align:right;">Total</th>
+            </tr>
+          </thead>
+          <tbody id="utangItems"></tbody>
+          <tfoot>
+            <tr>
+              <th colspan="3" style="text-align:right;">Grand Total</th>
+              <th id="utangGrand" style="text-align:right;">Rp 0</th>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div class="tombol-aksi" style="margin-top:12px;">
+        <button type="button" id="btnCetakUtang">🖨️ Cetak</button>
+      </div>
     </div>
   </div>
 
