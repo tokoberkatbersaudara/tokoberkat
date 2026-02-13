@@ -6,6 +6,9 @@
   <title>Laporan - Toko Berkat Bersaudara</title>
 
   <link rel="stylesheet" href="../assets/css/style.css" />
+  <!-- PRINT: hanya berlaku saat print -->
+  <link rel="stylesheet" href="../assets/css/print.css" media="print" />
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script src="../lib/supabase.js"></script>
 </head>
@@ -90,7 +93,7 @@
           </div>
         </section>
 
-        <!-- LUNAS (RINGKAS: Tanggal | Kode (No Nota) | Total | (aksi kosong, tombol muncul saat klik via JS)) -->
+        <!-- LUNAS (ringkas) -->
         <section style="margin-top:14px;">
           <h3 style="margin:0 0 10px;">Lunas</h3>
           <table>
@@ -137,7 +140,7 @@
           </table>
         </section>
 
-        <!-- AREA CETAK (dipakai JS untuk print ulang) -->
+        <!-- AREA CETAK -->
         <section id="areaStruk" class="struk" style="display:none;"></section>
       </main>
 
@@ -147,8 +150,8 @@
     </div>
   </div>
 
-  <!-- MODAL DETAIL LUNAS (untuk print ulang transaksi lunas) -->
-  <div class="modal" id="modalLunas" aria-hidden="true">
+  <!-- MODAL DETAIL LUNAS -->
+  <div class="modal" id="modalLunas" aria-hidden="true" hidden>
     <div class="modal__backdrop" id="modalLunasBackdrop"></div>
 
     <div
@@ -199,7 +202,7 @@
   </div>
 
   <!-- MODAL DETAIL UTANG -->
-  <div class="modal" id="modalUtang" aria-hidden="true">
+  <div class="modal" id="modalUtang" aria-hidden="true" hidden>
     <div class="modal__backdrop" id="modalUtangBackdrop"></div>
 
     <div
