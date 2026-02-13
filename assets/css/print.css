@@ -1,40 +1,44 @@
 /* assets/css/print.css */
-/* PRINT 80mm (auto height) - hanya tampilkan struk (#areaStruk) */
+/* ================= PRINT STRUK (THERMAL 80mm) ================= */
+/* Berlaku untuk semua halaman yang punya #areaStruk dan .struk (penjualan + laporan) */
 
 @media print {
   @page {
-    size: 80mm auto;   /* ✅ FIX: jangan pakai tinggi 50mm biar tidak scaling */
+    /* thermal roll: lebar 80mm, tinggi mengikuti konten */
+    size: 80mm auto;
     margin: 0;
   }
 
   html, body {
-    margin: 0 !important;
-    padding: 0 !important;
     background: #fff !important;
-    color: #000 !important;
   }
 
   body {
-    width: 80mm !important; /* ✅ paksa lebar body */
+    margin: 0 !important;
+    padding: 0 !important;
+    color: #000 !important;
+    width: 80mm !important;
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco,
-                 Consolas, "Liberation Mono", "Courier New", monospace !important;
+      Consolas, "Liberation Mono", "Courier New", monospace !important;
     font-size: 10px !important;
     line-height: 1.25 !important;
   }
 
-  /* sembunyikan semua */
+  /* SEMBUNYIKAN SEMUA */
   body * {
     visibility: hidden !important;
   }
 
-  /* tampilkan hanya area struk */
-  #areaStruk, #areaStruk * {
+  /* TAMPILKAN HANYA STRUK */
+  #areaStruk,
+  #areaStruk * {
     visibility: visible !important;
   }
 
+  /* area struk selalu di pojok kiri atas */
   #areaStruk {
     display: block !important;
-    position: absolute !important;
+    position: fixed !important;
     left: 0 !important;
     top: 0 !important;
     width: 80mm !important;
@@ -46,24 +50,36 @@
     background: #fff !important;
   }
 
-  /* isi struk */
+  /* container struk (baik dari penjualan.js maupun laporan.js) */
   #areaStruk .struk {
-    width: 80mm !important;
-    padding: 6px 6px !important;
+    width: 100% !important;
     box-sizing: border-box !important;
+    padding: 6px !important;
+    margin: 0 !important;
   }
 
-  #areaStruk h2 {
+  #areaStruk .struk h2 {
     text-align: center !important;
     margin: 0 0 4px !important;
     font-size: 12px !important;
     font-weight: 800 !important;
   }
 
-  #areaStruk .info-waktu p {
+  /* alamat toko kalau ada (penjualan.js punya .alamat-toko) */
+  #areaStruk .alamat-toko {
     text-align: center !important;
-    font-size: 10px !important;
-    margin: 1px 0 !important;
+    font-size: 9px !important;
+    line-height: 1.35 !important;
+    margin: 2px 0 6px !important;
+  }
+
+  #areaStruk .info-waktu {
+    text-align: center !important;
+    margin-bottom: 4px !important;
+  }
+  #areaStruk .info-waktu p {
+    margin: 0 !important;
+    font-size: 9px !important;
   }
 
   #areaStruk hr {
@@ -77,10 +93,12 @@
     justify-content: space-between !important;
     gap: 6px !important;
     margin: 2px 0 !important;
+    font-size: 9.5px !important;
   }
 
+  /* kolom kiri (nama barang) jangan bikin melebar */
   #areaStruk .item > div:first-child {
-    max-width: 52mm !important;
+    max-width: 52mm !important; /* aman untuk 80mm */
     overflow: hidden !important;
     text-overflow: ellipsis !important;
     white-space: nowrap !important;
@@ -98,9 +116,15 @@
     font-weight: 800 !important;
     display: flex !important;
     justify-content: space-between !important;
+    font-size: 10px !important;
   }
 
   #areaStruk .center {
     text-align: center !important;
+  }
+
+  #areaStruk p {
+    margin: 2px 0 !important;
+    font-size: 9px !important;
   }
 }
