@@ -6,7 +6,6 @@
   <title>Laporan - Toko Berkat Bersaudara</title>
 
   <link rel="stylesheet" href="../assets/css/style.css" />
-  <!-- PRINT: hanya berlaku saat print (pastikan print.css sudah di-set ke ukuran 80x50mm) -->
   <link rel="stylesheet" href="../assets/css/print.css" media="print" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
@@ -71,7 +70,7 @@
           <div style="display:flex; gap:.5rem; flex-wrap:wrap;">
             <button id="btnMuat" type="button">Muat Data</button>
             <button id="btnCSV" type="button">Export CSV</button>
-            <button id="btnCetak" type="button" title="Cetak halaman (bukan struk ulang)">Cetak</button>
+            <button id="btnCetak" type="button">Cetak</button>
           </div>
         </section>
 
@@ -140,7 +139,7 @@
           </table>
         </section>
 
-        <!-- AREA CETAK (dipakai JS untuk print ulang struk) -->
+        <!-- AREA CETAK -->
         <section id="areaStruk" class="struk" style="display:none;"></section>
       </main>
 
