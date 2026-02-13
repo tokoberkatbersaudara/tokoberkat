@@ -1,15 +1,28 @@
 // js/laporan.js
-// FINAL FIX
-// - LUNAS: ringkas per transaksi (Tanggal | No Nota | Total | tombol cetak muncul saat klik baris)
-// - Klik baris LUNAS => buka modal detail + tombol cetak di modal
-// - FIX PRINT: pakai window.afterprint untuk cleanup (tidak “langsung hilang”)
-// - UTANG: ringkas per transaksi + detail modal + Tandai Lunas (update payment_status -> paid)
-// - Range WITA aman (Hari/Minggu/Bulan)
+// UPDATED (PRINT DISAMAKAN DENGAN penjualan.js)
+// - LUNAS: ringkas per transaksi (Tanggal | No Nota | Total | kolom aksi kosong) -> klik baris buka modal detail
+// - Modal LUNAS pakai HTML (bukan create via JS) + tombol CETAK ulang transaksi lunas
+// - PRINT: flow sama persis seperti penjualan.js (show areaStruk -> window.print -> cleanup setTimeout)
+// - UTANG tetap: ringkas per transaksi + Detail modal + Tandai Lunas
+// - Export CSV + Cetak periode (btnCetak) tetap window.print() halaman
 
 const db = window.db;
 
 /* ===================== UTIL ===================== */
 const toRp = (n) => "Rp " + Number(n || 0).toLocaleString("id-ID");
+
+function toWITADisplay(iso) {
+  return new Intl.DateTimeFormat("id-ID", {
+    timeZone: "Asia/Makassar",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).format(new Date(iso));
+}
 
 function onlyDateWITA(iso) {
   return new Intl.DateTimeFormat("id-ID", {
@@ -44,20 +57,6 @@ function rangeISO_WITA(fromStr, toStr) {
   return { startISO: start.toISOString(), endISO: end.toISOString() };
 }
 
-function escapeHtml(str) {
-  return String(str ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
-function shortFromUuid(id) {
-  const s = String(id || "").replace(/-/g, "").slice(-6).toUpperCase();
-  return s ? `TRX-${s}` : "-";
-}
-
 function getPartsWITA(date = new Date()) {
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Makassar",
@@ -77,7 +76,7 @@ function weekStartEndWITA() {
     `${String(y).padStart(4, "0")}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}T12:00:00+08:00`
   );
 
-  const day = nowWITA.getDay(); // 0..6
+  const day = nowWITA.getDay();
   const diffToMon = (day + 6) % 7;
 
   const start = new Date(nowWITA);
@@ -97,7 +96,7 @@ function weekStartEndWITA() {
 }
 
 function monthStartEndWITA() {
-  const { y, m } = getPartsWITA(); // 1..12
+  const { y, m } = getPartsWITA();
   const mm = String(m).padStart(2, "0");
   const dari = `${y}-${mm}-01`;
 
@@ -113,6 +112,20 @@ function monthStartEndWITA() {
   return { dari, sampai };
 }
 
+function escapeHtml(str) {
+  return String(str ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function shortFromUuid(id) {
+  const s = String(id || "").replace(/-/g, "").slice(-6).toUpperCase();
+  return s ? `TRX-${s}` : "-";
+}
+
 /* ===================== STATE ===================== */
 let rawData = [];
 let activeUnpaidKey = null;
@@ -122,7 +135,6 @@ let currentFrom = null;
 let currentTo = null;
 
 let btnTandaiLunas = null;
-let selectedPaidRowKey = null; // untuk munculin tombol cetak di row LUNAS
 
 /* ===================== DOM ===================== */
 const elDari = document.getElementById("tglDari");
@@ -147,10 +159,10 @@ const btnMuat = document.getElementById("btnMuat");
 const btnCSV = document.getElementById("btnCSV");
 const btnCetak = document.getElementById("btnCetak");
 
-// Area cetak
+// Area cetak (wajib ada di laporan.html)
 const elAreaStruk = document.getElementById("areaStruk");
 
-// Modal LUNAS (sudah ada di HTML)
+// Modal LUNAS (ada di HTML)
 const modalLunas = document.getElementById("modalLunas");
 const modalLunasBackdrop = document.getElementById("modalLunasBackdrop");
 const btnTutupModalLunas = document.getElementById("btnTutupModalLunas");
@@ -159,7 +171,7 @@ const elLunasMeta = document.getElementById("lunasMeta");
 const elLunasItems = document.getElementById("lunasItems");
 const elLunasGrand = document.getElementById("lunasGrand");
 
-// Modal UTANG (sudah ada di HTML)
+// Modal UTANG (ada di HTML)
 const modalUtang = document.getElementById("modalUtang");
 const modalUtangBackdrop = document.getElementById("modalUtangBackdrop");
 const btnTutupModalUtang = document.getElementById("btnTutupModalUtang");
@@ -177,50 +189,71 @@ function getRowKey(r) {
   return r.trx_id ? String(r.trx_id) : `legacy-${r.id}`;
 }
 
-function getPaidRowsByKey(key) {
-  const k = String(key);
-  return rawData.filter((r) => !isUnpaidRow(r) && getRowKey(r) === k);
-}
-
 function getUnpaidRowsByKey(key) {
   const k = String(key);
   return rawData.filter((r) => isUnpaidRow(r) && getRowKey(r) === k);
 }
 
-/* ===================== PRINT (FIXED) ===================== */
-function buildReceiptHtml({ status, displayId, tanggalISO, items, grandTotal }) {
-  const tgl = tanggalISO ? onlyDateWITA(tanggalISO) : "-";
-  const jam = tanggalISO ? onlyTimeWITA(tanggalISO) : "-";
+function getPaidRowsByKey(key) {
+  const k = String(key);
+  return rawData.filter((r) => !isUnpaidRow(r) && getRowKey(r) === k);
+}
 
-  const rowsHtml = (items || [])
-    .map((it) => {
-      const left = `${escapeHtml(it.nama || "")} (${escapeHtml(it.kode || "-")})`;
-      const right = `${it.jumlah} x ${toRp(it.harga)}`;
-      return `
+/* ===================== PRINT (SAMA DENGAN penjualan.js) ===================== */
+function buildStrukHtml(receipt) {
+  const dt = receipt.when;
+
+  const tanggal = new Intl.DateTimeFormat("id-ID", {
+    timeZone: "Asia/Makassar",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(dt);
+
+  const jam = new Intl.DateTimeFormat("id-ID", {
+    timeZone: "Asia/Makassar",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).format(dt);
+
+  const itemsHtml = (receipt.items || [])
+    .map(
+      (it) => `
         <div class="item">
-          <div>${left}</div>
-          <div>${right}</div>
+          <div>${escapeHtml(it.nama)} (${escapeHtml(it.kode)})</div>
+          <div>${it.jumlah} x ${toRp(it.harga)}</div>
         </div>
         <div class="item" style="justify-content:flex-end;">
           <div style="font-weight:700;">${toRp(it.total)}</div>
         </div>
-      `;
-    })
+      `
+    )
     .join("");
+
+  const statusLine =
+    receipt.payment_status === "unpaid"
+      ? `<p class="center" style="margin:6px 0; font-weight:800;">STATUS: UTANG</p>`
+      : `<p class="center" style="margin:6px 0; font-weight:800;">STATUS: LUNAS</p>`;
 
   return `
     <div class="struk">
       <h2>Toko Berkat Bersaudara</h2>
+      <p class="alamat-toko">
+        Jl. Kampung Melayu Darat No 34<br>
+        Banjarmasin
+      </p>
       <div class="info-waktu">
-        <p>${tgl} • ${jam} (WITA)</p>
-        <p>ID: ${escapeHtml(displayId)}</p>
+        <p>${tanggal} • ${jam} (WITA)</p>
+        <p>ID: ${escapeHtml(receipt.display_id)}</p>
       </div>
-      <p class="center" style="margin:6px 0; font-weight:800;">STATUS: ${escapeHtml(status)}</p>
+      ${statusLine}
       <hr />
-      ${rowsHtml}
+      ${itemsHtml}
       <div class="total">
         <span>Total</span>
-        <span>${toRp(grandTotal)}</span>
+        <span>${toRp(receipt.grandTotal)}</span>
       </div>
       <p class="center" style="margin-top:8px;">Terima kasih 🙏</p>
     </div>
@@ -228,29 +261,21 @@ function buildReceiptHtml({ status, displayId, tanggalISO, items, grandTotal }) 
 }
 
 function printHtmlOnce(html) {
-  if (!elAreaStruk) return alert("areaStruk tidak ditemukan di laporan.html");
+  if (!elAreaStruk) {
+    alert("areaStruk tidak ditemukan di laporan.html");
+    return;
+  }
 
   elAreaStruk.innerHTML = html;
   elAreaStruk.style.display = "block";
 
-  const cleanup = () => {
-    window.removeEventListener("afterprint", cleanup);
+  window.print();
+
+  // SAMA persis seperti penjualan.js
+  setTimeout(() => {
     elAreaStruk.style.display = "none";
     elAreaStruk.innerHTML = "";
-  };
-
-  window.addEventListener("afterprint", cleanup);
-
-  // kasih waktu DOM “ngepaint”
-  setTimeout(() => {
-    try {
-      window.print();
-    } catch (e) {
-      cleanup();
-      console.error(e);
-      alert("Gagal memulai print.");
-    }
-  }, 80);
+  }, 250);
 }
 
 function printPaidTransactionByKey(key) {
@@ -258,10 +283,10 @@ function printPaidTransactionByKey(key) {
   if (!rows.length) return alert("Data transaksi lunas tidak ditemukan.");
 
   const first = rows.reduce((a, b) => (new Date(a.tanggal) < new Date(b.tanggal) ? a : b));
-  const displayId = first.trx_id ? shortFromUuid(first.trx_id) : `SALE-${first.id}`;
+  const display_id = first.trx_id ? shortFromUuid(first.trx_id) : `SALE-${first.id}`;
 
   const items = rows.map((r) => ({
-    nama: r.product_id?.nama || "",
+    nama: r.product_id?.nama || "-",
     kode: r.product_id?.kode || "-",
     jumlah: r.jumlah ?? 0,
     harga: r.harga ?? 0,
@@ -270,15 +295,15 @@ function printPaidTransactionByKey(key) {
 
   const grandTotal = items.reduce((a, b) => a + Number(b.total || 0), 0);
 
-  const html = buildReceiptHtml({
-    status: "LUNAS",
-    displayId,
-    tanggalISO: first.tanggal,
+  const receipt = {
+    display_id,
+    when: new Date(first.tanggal),
     items,
     grandTotal,
-  });
+    payment_status: "paid",
+  };
 
-  printHtmlOnce(html);
+  printHtmlOnce(buildStrukHtml(receipt));
 }
 
 /* ===================== MODAL LUNAS ===================== */
@@ -286,6 +311,7 @@ function bukaModalLunas(key) {
   if (!modalLunas) return;
 
   activePaidKey = String(key);
+
   const rows = getPaidRowsByKey(activePaidKey);
   if (!rows.length) return;
 
@@ -294,12 +320,15 @@ function bukaModalLunas(key) {
   const grand = rows.reduce((a, b) => a + Number(b.total || 0), 0);
 
   if (elLunasMeta) {
-    elLunasMeta.innerHTML = `<b>${escapeHtml(displayId)}</b><br>Tanggal: ${escapeHtml(onlyDateWITA(first.tanggal))}`;
+    elLunasMeta.innerHTML = `<b>${escapeHtml(displayId)}</b><br>Tanggal: ${escapeHtml(
+      onlyDateWITA(first.tanggal)
+    )} • ${escapeHtml(onlyTimeWITA(first.tanggal))}`;
   }
 
   if (elLunasItems) {
     elLunasItems.innerHTML = rows
-      .map((r) => `
+      .map(
+        (r) => `
         <tr>
           <td>${escapeHtml(onlyDateWITA(r.tanggal))}</td>
           <td>${escapeHtml(r.product_id?.nama || "-")}</td>
@@ -307,7 +336,8 @@ function bukaModalLunas(key) {
           <td style="text-align:center; font-weight:800;">${r.jumlah ?? 0}</td>
           <td style="text-align:right; font-weight:900;">${toRp(r.total)}</td>
         </tr>
-      `)
+      `
+      )
       .join("");
   }
 
@@ -348,7 +378,7 @@ function ensureBtnTandaiLunas() {
   btn.textContent = "✅ Tandai Lunas";
   btn.className = "btn-alt";
 
-  // taruh sebelum tombol cetak utang kalau ada
+  // taruh sebelum tombol cetak utang (kalau ada)
   if (btnCetakUtang && btnCetakUtang.parentElement === actionRow) {
     actionRow.insertBefore(btn, btnCetakUtang);
   } else {
@@ -364,6 +394,7 @@ function bukaModalUtang(key) {
   if (!modalUtang) return;
 
   activeUnpaidKey = String(key);
+
   const rows = getUnpaidRowsByKey(activeUnpaidKey);
   if (!rows.length) return alert("Detail utang tidak ditemukan. Coba muat ulang.");
 
@@ -372,20 +403,24 @@ function bukaModalUtang(key) {
   const total = rows.reduce((a, b) => a + Number(b.total || 0), 0);
 
   if (elUtangMeta) {
-    elUtangMeta.innerHTML = `<b>${escapeHtml(displayId)}</b><br>Tanggal: ${escapeHtml(onlyDateWITA(first.tanggal))}`;
+    elUtangMeta.innerHTML = `<b>${escapeHtml(displayId)}</b><br>Tanggal: ${escapeHtml(
+      onlyDateWITA(first.tanggal)
+    )} • ${escapeHtml(onlyTimeWITA(first.tanggal))}`;
   }
   if (elUtangGrand) elUtangGrand.textContent = toRp(total);
 
   if (elUtangItems) {
     elUtangItems.innerHTML = rows
-      .map((r) => `
+      .map(
+        (r) => `
         <tr>
           <td>${escapeHtml(onlyDateWITA(r.tanggal))}</td>
           <td>${escapeHtml(r.product_id?.kode || "-")}</td>
           <td style="text-align:center; font-weight:800;">${r.jumlah ?? 0}</td>
           <td style="text-align:right; font-weight:900;">${toRp(r.total)}</td>
         </tr>
-      `)
+      `
+      )
       .join("");
   }
 
@@ -412,6 +447,7 @@ async function tandaiUtangLunasAktif() {
   if (!rows.length) return alert("Data utang tidak ditemukan.");
 
   const trxId = rows[0].trx_id ? String(rows[0].trx_id) : null;
+
   if (!confirm("Tandai transaksi utang ini sebagai LUNAS?")) return;
 
   const btn = ensureBtnTandaiLunas();
@@ -447,7 +483,6 @@ function render() {
 
   // ===== LUNAS (group per transaksi) =====
   const mapPaid = new Map();
-
   for (const r of rawData) {
     if (isUnpaidRow(r)) continue;
 
@@ -456,7 +491,6 @@ function render() {
     if (kw && !nama.includes(kw) && !kode.includes(kw)) continue;
 
     const key = getRowKey(r);
-
     if (!mapPaid.has(key)) {
       mapPaid.set(key, {
         key,
@@ -467,10 +501,8 @@ function render() {
         total: 0,
       });
     }
-
     const g = mapPaid.get(key);
     g.total += Number(r.total || 0);
-
     if (r.tanggal && new Date(r.tanggal) < new Date(g.tanggal_first)) g.tanggal_first = r.tanggal;
     if (r.tanggal && new Date(r.tanggal) > new Date(g.tanggal_last)) g.tanggal_last = r.tanggal;
   }
@@ -484,16 +516,12 @@ function render() {
         .map((g) => {
           const noNota = g.trx_id ? shortFromUuid(g.trx_id) : `SALE-${g.legacy_id}`;
           const tgl = g.tanggal_first ? onlyDateWITA(g.tanggal_first) : "-";
-          const selectedClass = selectedPaidRowKey === g.key ? "is-selected" : "";
-
           return `
-            <tr class="row-lunas ${selectedClass}" data-lunas-key="${escapeHtml(g.key)}" title="Klik untuk detail">
+            <tr data-lunas-detail="${escapeHtml(g.key)}" style="cursor:pointer;" title="Klik untuk detail & cetak">
               <td>${escapeHtml(tgl)}</td>
               <td style="font-weight:800;">${escapeHtml(noNota)}</td>
-              <td class="col-angka" style="font-weight:900;">${toRp(g.total)}</td>
-              <td class="col-aksi">
-                <button type="button" class="btn-cetak-lunas row-actions" data-cetak-lunas="${escapeHtml(g.key)}">Cetak</button>
-              </td>
+              <td style="text-align:right; font-weight:900;">${toRp(g.total)}</td>
+              <td style="text-align:right;"></td>
             </tr>
           `;
         })
@@ -504,8 +532,7 @@ function render() {
   elGrandLunas.textContent = toRp(totalLunas);
 
   // ===== UTANG (ringkas per transaksi) =====
-  const mapUtang = new Map();
-
+  const map = new Map();
   for (const r of rawData) {
     if (!isUnpaidRow(r)) continue;
 
@@ -514,9 +541,8 @@ function render() {
     if (kw && !nama.includes(kw) && !kode.includes(kw)) continue;
 
     const key = getRowKey(r);
-
-    if (!mapUtang.has(key)) {
-      mapUtang.set(key, {
+    if (!map.has(key)) {
+      map.set(key, {
         key,
         trx_id: r.trx_id || null,
         legacy_id: r.trx_id ? null : r.id,
@@ -527,7 +553,7 @@ function render() {
       });
     }
 
-    const g = mapUtang.get(key);
+    const g = map.get(key);
     g.total += Number(r.total || 0);
     g.qty += Number(r.jumlah || 0);
 
@@ -535,12 +561,12 @@ function render() {
     if (r.tanggal && new Date(r.tanggal) > new Date(g.tanggal_last)) g.tanggal_last = r.tanggal;
   }
 
-  const utangGroups = Array.from(mapUtang.values()).sort(
+  const groups = Array.from(map.values()).sort(
     (a, b) => new Date(b.tanggal_last) - new Date(a.tanggal_last)
   );
 
-  elTBodyUtang.innerHTML = utangGroups.length
-    ? utangGroups
+  elTBodyUtang.innerHTML = groups.length
+    ? groups
         .map((g) => {
           const kodeTrx = g.trx_id ? shortFromUuid(g.trx_id) : `SALE-${g.legacy_id}`;
           const tgl = g.tanggal_first ? onlyDateWITA(g.tanggal_first) : "-";
@@ -550,8 +576,8 @@ function render() {
               <td>${escapeHtml(tgl)}</td>
               <td style="font-weight:800;">${escapeHtml(kodeTrx)}</td>
               <td style="text-align:center; font-weight:800;">${g.qty}</td>
-              <td class="col-angka" style="font-weight:900;">${toRp(g.total)}</td>
-              <td class="col-aksi">
+              <td style="text-align:right; font-weight:900;">${toRp(g.total)}</td>
+              <td style="text-align:right;">
                 <button type="button" data-utang-detail="${escapeHtml(g.key)}">Detail</button>
               </td>
             </tr>
@@ -560,7 +586,7 @@ function render() {
         .join("")
     : `<tr><td colspan="5" class="muted">Tidak ada utang</td></tr>`;
 
-  const totalUtang = utangGroups.reduce((a, b) => a + Number(b.total || 0), 0);
+  const totalUtang = groups.reduce((a, b) => a + Number(b.total || 0), 0);
   elGrandUtang.textContent = toRp(totalUtang);
 
   elTotalLunas.textContent = toRp(totalLunas);
@@ -592,8 +618,6 @@ async function loadRange(dari, sampai) {
   }
 
   rawData = data || [];
-  // reset selection tombol cetak row
-  selectedPaidRowKey = null;
   render();
 }
 
@@ -615,7 +639,7 @@ function exportCSV() {
     const status = isUnpaidRow(r) ? "UTANG" : "LUNAS";
     const kodeTrx = r.trx_id ? shortFromUuid(r.trx_id) : `SALE-${r.id}`;
     return [
-      `${onlyDateWITA(r.tanggal)} ${onlyTimeWITA(r.tanggal)}`,
+      toWITADisplay(r.tanggal),
       status,
       kodeTrx,
       r.product_id?.nama || "",
@@ -643,7 +667,7 @@ function exportCSV() {
 
 /* ===================== EVENTS ===================== */
 document.addEventListener("DOMContentLoaded", () => {
-  // tutup modal dari awal
+  // init modal hidden
   tutupModalUtang();
   tutupModalLunas();
 
@@ -676,28 +700,15 @@ document.addEventListener("DOMContentLoaded", () => {
   elCari?.addEventListener("input", render);
 
   btnCSV?.addEventListener("click", exportCSV);
+
+  // ini cetak HALAMAN (bukan struk). Struk ulang via modal lunas -> tombol cetak.
   btnCetak?.addEventListener("click", () => window.print());
 
-  // LUNAS: klik tombol cetak di row (stop propagation)
+  // klik baris lunas -> modal detail
   elTBodyLunas?.addEventListener("click", (e) => {
-    const btn = e.target.closest("button[data-cetak-lunas]");
-    if (btn) {
-      e.preventDefault();
-      e.stopPropagation();
-      printPaidTransactionByKey(btn.dataset.cetakLunas);
-      return;
-    }
-
-    const tr = e.target.closest("tr[data-lunas-key]");
+    const tr = e.target.closest("tr[data-lunas-detail]");
     if (!tr) return;
-
-    // toggle row selected untuk munculin tombol
-    const key = tr.dataset.lunasKey;
-    selectedPaidRowKey = selectedPaidRowKey === key ? null : key;
-    render();
-
-    // buka modal detail
-    bukaModalLunas(key);
+    bukaModalLunas(tr.dataset.lunasDetail);
   });
 
   // tombol cetak di modal lunas
@@ -709,7 +720,7 @@ document.addEventListener("DOMContentLoaded", () => {
   btnTutupModalLunas?.addEventListener("click", tutupModalLunas);
   modalLunasBackdrop?.addEventListener("click", tutupModalLunas);
 
-  // UTANG: detail
+  // klik detail utang
   elTBodyUtang?.addEventListener("click", (e) => {
     const btn = e.target.closest("button[data-utang-detail]");
     if (!btn) return;
@@ -719,7 +730,7 @@ document.addEventListener("DOMContentLoaded", () => {
   btnTutupModalUtang?.addEventListener("click", tutupModalUtang);
   modalUtangBackdrop?.addEventListener("click", tutupModalUtang);
 
-  // ESC close
+  // ESC
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Escape") return;
     tutupModalUtang();
@@ -728,10 +739,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // placeholder cetak utang
   btnCetakUtang?.addEventListener("click", () => {
-    alert("Cetak utang belum diaktifkan. (Kalau mau, bisa kita samakan flow-nya dengan LUNAS).");
+    alert("Cetak utang dari modal belum diaktifkan di versi ini.");
   });
 
-  // INIT default hari ini
+  // INIT: hari ini
   const t = todayWITA();
   elDari.value = t;
   elSampai.value = t;
