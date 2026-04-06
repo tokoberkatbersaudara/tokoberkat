@@ -1,8 +1,9 @@
 // js/penjualan.js
-// FIXED VERSION (cetak balik jalan)
+// PROFIT-READY VERSION
 // - Penjualan + keranjang
 // - List penjualan hari ini (group by trx_id kalau ada)
 // - Cetak transaksi terakhir + cetak per transaksi
+// - Simpan snapshot harga modal, total_modal, profit ke tabel sales
 
 const db = window.db;
 
@@ -121,9 +122,9 @@ function buildStrukHtml(receipt) {
     <div class="struk">
       <h2>Toko Berkat Bersaudara</h2>
       <p class="alamat-toko">
-    Jl. Kampung Melayu Darat No 34<br>
-    Banjarmasin
-  </p>
+        Jl. Kampung Melayu Darat No 34<br>
+        Banjarmasin
+      </p>
       <div class="info-waktu">
         <p>${tanggal} • ${jam} (WITA)</p>
         <p>ID: ${escapeHtml(receipt.display_id)}</p>
@@ -143,8 +144,6 @@ function buildStrukHtml(receipt) {
 // identifier bisa trx_id (uuid) atau id numeric (legacy)
 async function printByIdentifier(identifier) {
   const idStr = String(identifier || "").trim();
-
-  // deteksi uuid lebih aman (uuid v4 biasanya ada '-')
   const isUuid = idStr.includes("-") || idStr.length >= 32;
 
   const base = db
@@ -177,8 +176,7 @@ async function printByIdentifier(identifier) {
     total: r.total,
   }));
 
-  const grandTotal = items.reduce((a, b) => a + (b.total || 0), 0);
-
+  const grandTotal = items.reduce((a, b) => a + Number(b.total || 0), 0);
   const display_id = rows[0].trx_id ? shortFromUuid(rows[0].trx_id) : `SALE-${rows[0].id}`;
 
   const receipt = {
@@ -205,7 +203,7 @@ async function printByIdentifier(identifier) {
 async function loadProducts() {
   const { data, error } = await db
     .from("products")
-    .select("id, nama, kode, jumlah, harga")
+    .select("id, nama, kode, jumlah, harga, harga_modal")
     .order("nama");
 
   if (error) {
@@ -282,17 +280,25 @@ function addToCart() {
   const newQty = (exist?.qty || 0) + qty;
   if (newQty > stok) return alert("Total di keranjang melebihi stok");
 
+  const hargaJual = Number(p.harga || 0);
+  const hargaModal = Number(p.harga_modal || 0);
+
   if (exist) {
     exist.qty = newQty;
     exist.subtotal = exist.qty * exist.harga;
+    exist.subtotal_modal = exist.qty * exist.harga_modal;
+    exist.profit = exist.subtotal - exist.subtotal_modal;
   } else {
     cart.push({
       product_id: String(pid),
       nama: p.nama,
       kode: p.kode,
-      harga: Number(p.harga || 0),
+      harga: hargaJual,
+      harga_modal: hargaModal,
       qty,
-      subtotal: qty * Number(p.harga || 0),
+      subtotal: qty * hargaJual,
+      subtotal_modal: qty * hargaModal,
+      profit: qty * (hargaJual - hargaModal),
     });
   }
 
@@ -322,13 +328,22 @@ async function saveSale() {
     const status = isUtang ? "unpaid" : "paid";
 
     for (const it of cart) {
+      const hargaJual = Number(it.harga || 0);
+      const hargaModal = Number(it.harga_modal || 0);
+      const totalJual = Number(it.subtotal || 0);
+      const totalModal = Number(it.subtotal_modal || 0);
+      const profit = Number(it.profit || 0);
+
       const { error: eSale } = await db.from("sales").insert([
         {
           trx_id: trxId,
           product_id: Number(it.product_id),
           jumlah: it.qty,
-          harga: it.harga,
-          total: it.subtotal,
+          harga: hargaJual,
+          harga_modal: hargaModal,
+          total: totalJual,
+          total_modal: totalModal,
+          profit: profit,
           tanggal: new Date().toISOString(),
           payment_status: status,
           customer_name: isUtang ? (elCustomer?.value || null) : null,
@@ -342,7 +357,7 @@ async function saveSale() {
         return;
       }
 
-      // update stok (tanpa db.raw)
+      // update stok
       const p = getProductById(it.product_id);
       const stokNow = Number(p?.jumlah || 0);
       const sisa = stokNow - it.qty;
@@ -367,9 +382,7 @@ async function saveSale() {
     const display = shortFromUuid(trxId);
     if (elLastInfo) elLastInfo.textContent = `Transaksi terakhir: ${display}`;
 
-    // ✅ FIX: tampilkan tombol cetak terakhir
     if (btnPrintLast) btnPrintLast.style.display = "inline-block";
-
     localStorage.setItem("last_trx_id", trxId);
 
     alert(isUtang ? "Transaksi utang tersimpan" : "Transaksi tersimpan");
@@ -406,7 +419,6 @@ async function loadTodaySales() {
     return;
   }
 
-  // group by trx_id (kalau ada), kalau tidak -> legacy per row
   const map = new Map();
   for (const r of data) {
     const key = r.trx_id ? String(r.trx_id) : `legacy-${r.id}`;
@@ -439,8 +451,6 @@ async function loadTodaySales() {
         const idLabel = t.trx_id ? shortFromUuid(t.trx_id) : `SALE-${t.id}`;
         const jam = timeWITAhhmm(t.tanggal_first);
         const status = t.payment_status === "unpaid" ? "Utang" : "Tunai";
-
-        // identifier utk print: trx_id kalau ada, kalau legacy pakai id
         const identifier = t.trx_id ? String(t.trx_id) : String(t.id);
 
         return `
@@ -484,7 +494,6 @@ btnPrintLast?.addEventListener("click", async () => {
   await printByIdentifier(trxId);
 });
 
-// ✅ FIX: tombol cetak dari list harian
 elTBodyHari?.addEventListener("click", async (e) => {
   const btn = e.target.closest("button[data-print]");
   if (!btn) return;
@@ -497,11 +506,9 @@ elTBodyHari?.addEventListener("click", async (e) => {
   renderCart();
   await loadTodaySales();
 
-  // restore last trx
   const lastId = localStorage.getItem("last_trx_id");
   if (lastId && elLastInfo) {
     elLastInfo.textContent = `Transaksi terakhir: ${shortFromUuid(lastId)}`;
-    // ✅ FIX: munculkan tombol cetak terakhir juga
     if (btnPrintLast) btnPrintLast.style.display = "inline-block";
   }
 })();

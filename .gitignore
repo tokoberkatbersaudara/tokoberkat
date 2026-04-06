@@ -9,3 +9,12 @@
 
 # node
 node_modules/
+
+# ===== Local-only Admin Page =====
+pages/admin/
+assets/css/admin.css
+js/admin/
+
+# Optional: local env/config if any
+.env
+.env.local

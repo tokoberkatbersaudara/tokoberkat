@@ -56,7 +56,7 @@
 
             <div id="pagination" style="margin-top: 1em;">
               <button id="btnPrev" type="button">Sebelumnya</button>
-              <span id="halamanSekarang">1</span>
+              <span id="halamanSekarang">1/1</span>
               <button id="btnNext" type="button">Berikutnya</button>
             </div>
 
@@ -64,9 +64,64 @@
           </section>
         </div>
 
-        <!-- KANAN: EDIT CARD -->
+        <!-- KANAN: TAMBAH + EDIT -->
         <aside class="stok-side">
-          <section class="form-section sticky">
+          <!-- TAMBAH PRODUK -->
+          <section id="cardTambahProduk" class="form-section sticky" style="margin-bottom:14px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+              <h3 style="margin:0;">Tambah Produk</h3>
+              <button id="btnResetTambah" type="button" class="btn-alt">Reset</button>
+            </div>
+
+            <p class="muted" style="margin:8px 0 12px;">
+              Isi nama barang lalu klik <b>Buat SKU</b> atau isi manual.
+            </p>
+
+            <label for="addNama">Nama</label>
+            <input
+              type="text"
+              id="addNama"
+              placeholder="Contoh: LAMPU TIDUR 3 WATT"
+              autocomplete="off"
+            />
+
+            <label for="addKode" style="margin-top:10px;">Kode / SKU</label>
+            <div style="display:flex; gap:10px; align-items:center;">
+              <input
+                type="text"
+                id="addKode"
+                placeholder="Contoh: LTD-001"
+                style="flex:1; text-transform:uppercase;"
+                autocomplete="off"
+              />
+              <button id="btnBuatSku" type="button" class="btn-alt" style="white-space:nowrap;">
+                Buat SKU
+              </button>
+            </div>
+
+            <div class="grid-2" style="margin-top:10px;">
+              <div>
+                <label for="addJumlah">Stok Awal</label>
+                <input type="number" id="addJumlah" min="0" inputmode="numeric" placeholder="0" />
+              </div>
+              <div>
+                <label for="addHarga">Harga Jual</label>
+                <input type="number" id="addHarga" min="0" inputmode="numeric" placeholder="0" />
+              </div>
+            </div>
+
+            <label for="addStokMin" style="margin-top:10px;">Stok Minimum (opsional)</label>
+            <input type="number" id="addStokMin" min="0" inputmode="numeric" placeholder="Contoh: 5" />
+
+            <div class="tombol-aksi" style="margin-top:12px;">
+              <button id="btnTambahProduk" type="button">➕ Simpan Produk</button>
+            </div>
+
+            <p class="muted" id="addHint" style="margin:10px 0 0; font-size:12px;"></p>
+          </section>
+
+          <!-- EDIT CARD (HIDDEN default, muncul saat klik "Ubah") -->
+          <section id="cardEditStok" class="form-section sticky" style="display:none;">
             <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
               <h3 style="margin:0;">Edit Stok</h3>
               <button id="btnClearEdit" type="button" class="btn-alt" style="display:none;">Tutup</button>
